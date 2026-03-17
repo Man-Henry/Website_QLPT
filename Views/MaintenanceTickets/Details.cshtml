@@ -1,0 +1,91 @@
+@model Website_QLPT.Models.MaintenanceTicket
+@{
+    Layout = ViewData["Layout"]?.ToString() ?? "_Layout";
+    ViewData["Title"] = "Chi Tiết Báo Cáo Sự Cố";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-tools text-secondary me-2"></i>Chi Tiết Sự Cố #@Model.Id</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        @if (isAdmin && Model.Status != Website_QLPT.Models.TicketStatus.Closed && Model.Status != Website_QLPT.Models.TicketStatus.Resolved)
+        {
+            <a asp-action="EditStatus" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-primary">
+                <i class="bi bi-pencil"></i> Cập nhật Status
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h5 class="card-qlpt-title">@Model.Title</h5>
+            </div>
+            <div class="card-qlpt-body p-4">
+                <div class="mb-4 text-break">
+                    <h6 class="fw-bold text-muted mb-2">Mô tả sự cố:</h6>
+                    <p style="white-space: pre-wrap; font-size:15px; border-left: 4px solid #e2e8f0; padding-left:15px;" class="mb-0">@Model.Description</p>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <h6 class="fw-bold text-muted mb-2">Hình ảnh đính kèm:</h6>
+                    <img src="@Model.ImagePath" alt="Ticket Image" class="img-fluid rounded border" style="max-height: 400px; object-fit: contain;" />
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h5 class="card-qlpt-title">Thông tin bổ sung</h5>
+            </div>
+            <div class="card-qlpt-body p-4">
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                    <li>
+                        <div class="text-muted small fw-bold">Trạng thái</div>
+                        @{
+                            var badgeClass = Model.Status switch {
+                                Website_QLPT.Models.TicketStatus.Open => "badge-available",
+                                Website_QLPT.Models.TicketStatus.InProgress => "badge bg-warning text-dark",
+                                Website_QLPT.Models.TicketStatus.Resolved => "badge bg-success",
+                                _ => "badge bg-secondary"
+                            };
+                        }
+                        <span class="@badgeClass fs-6 px-3 py-2 mt-1 d-inline-block">@Model.Status.ToString()</span>
+                    </li>
+                    <li>
+                        <div class="text-muted small fw-bold">Độ ưu tiên</div>
+                        <span class="fw-bold">@Model.Priority.ToString()</span>
+                    </li>
+                    <li class="border-top pt-3">
+                        <div class="text-muted small fw-bold">Người báo cáo (Khách thuê)</div>
+                        <div><i class="bi bi-person me-1"></i> @Model.Contract?.Tenant?.FullName</div>
+                        <div><i class="bi bi-envelope me-1"></i> @Model.Contract?.Tenant?.Email</div>
+                        <div><i class="bi bi-telephone me-1"></i> @Model.Contract?.Tenant?.PhoneNumber</div>
+                    </li>
+                    <li class="border-top pt-3">
+                        <div class="text-muted small fw-bold">Phòng đang thuê</div>
+                        <div><strong>@Model.Contract?.Room?.Name</strong> (Khu nhà: @Model.Contract?.Room?.Property?.Name)</div>
+                    </li>
+                    <li class="border-top pt-3">
+                        <div class="text-muted small fw-bold">Ngày gửi</div>
+                        <div><i class="bi bi-calendar-event me-1"></i> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                    </li>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <li>
+                            <div class="text-muted small fw-bold">Cập nhật lần cuối</div>
+                            <div><i class="bi bi-clock-history me-1"></i> @Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

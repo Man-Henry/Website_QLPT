@@ -1,0 +1,157 @@
+@model Website_QLPT.Models.Invoice
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>In Hóa Đơn T@(Model.Month)-@(Model.Year) - @(Model.Contract?.Room?.Name)</title>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14px; margin: 0; padding: 20px; line-height: 1.5; color: #000; }
+        .invoice-container { max-width: 800px; margin: 0 auto; padding: 30px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+        .header-left { flex: 1; }
+        .header-right { text-align: right; }
+        .title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+        .subtitle { text-align: center; font-size: 14px; font-style: italic; margin-bottom: 30px; }
+        .info-table { width: 100%; margin-bottom: 30px; }
+        .info-table td { padding: 5px; }
+        .info-table td:nth-child(odd) { font-weight: bold; width: 150px; }
+        .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .detail-table th, .detail-table td { border: 1px solid #000; padding: 10px; text-align: right; }
+        .detail-table th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+        .detail-table th:first-child, .detail-table td:first-child { text-align: left; }
+        .total-row td { font-weight: bold; font-size: 16px; }
+        .notes { font-style: italic; margin-bottom: 30px; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 50px; }
+        .signature-box { text-align: center; width: 200px; }
+        .signature-line { margin-top: 80px; border-top: 1px dotted #000; }
+        
+        @@media print {
+            body { padding: 0; background: #fff; }
+            .invoice-container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #0d6efd; color: white; border: none; border-radius: 5px; font-weight: bold;">🖨️ In Hóa Đơn Mẫu Này</button>
+        <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #6c757d; color: white; border: none; border-radius: 5px; margin-left: 10px;">❌ Đóng</button>
+    </div>
+
+    <div class="invoice-container">
+        <div class="header">
+            <div class="header-left">
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">HỆ THỐNG QUẢN LÝ PHÒNG TRỌ</div>
+                <div>Khu nhà: <strong>@Model.Contract?.Room?.Property?.Name</strong></div>
+                <div>Địa chỉ: @Model.Contract?.Room?.Property?.Address</div>
+            </div>
+            <div class="header-right">
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">HÓA ĐƠN TIỀN NHÀ</div>
+                <div>Số HĐ: <strong>HD-@Model.Month@Model.Year-@Model.Id</strong></div>
+                <div>Ngày in: @DateTime.Now.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+
+        <div class="title">HÓA ĐƠN THU TIỀN</div>
+        <div class="subtitle">(Dùng cho tháng @Model.Month / @Model.Year)</div>
+
+        <table class="info-table">
+            <tr>
+                <td>Khách thuê:</td>
+                <td style="text-transform: uppercase;">@Model.Contract?.Tenant?.FullName</td>
+                <td>SĐT:</td>
+                <td>@Model.Contract?.Tenant?.PhoneNumber</td>
+            </tr>
+            <tr>
+                <td>Phòng:</td>
+                <td><strong>@Model.Contract?.Room?.Name</strong></td>
+                <td>Kỳ thu tiền:</td>
+                <td>Từ 01/@Model.Month/@Model.Year đến cuối tháng @Model.Month/@Model.Year</td>
+            </tr>
+        </table>
+
+        <table class="detail-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">STT</th>
+                    <th style="width: 35%;">Nội dung các khoản thu</th>
+                    <th style="width: 15%;">Số cũ</th>
+                    <th style="width: 15%;">Số mới</th>
+                    <th style="width: 10%;">Đơn giá</th>
+                    <th style="width: 20%;">Thành tiền (VNĐ)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: center;">1</td>
+                    <td>Tiền thuê phòng tháng @Model.Month/@Model.Year</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>@Model.RoomFee.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">2</td>
+                    <td>Tiền điện (@(Model.ElectricityNew - Model.ElectricityOld) kWh)</td>
+                    <td>@Model.ElectricityOld.ToString("N0")</td>
+                    <td>@Model.ElectricityNew.ToString("N0")</td>
+                    <td>@Model.ElectricityPrice.ToString("N0")</td>
+                    <td>@Model.ElectricityFee.ToString("N0")</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">3</td>
+                    <td>Tiền nước (@(Model.WaterNew - Model.WaterOld) m³)</td>
+                    <td>@Model.WaterOld.ToString("N0")</td>
+                    <td>@Model.WaterNew.ToString("N0")</td>
+                    <td>@Model.WaterPrice.ToString("N0")</td>
+                    <td>@Model.WaterFee.ToString("N0")</td>
+                </tr>
+                @if (Model.OtherFee > 0)
+                {
+                    <tr>
+                        <td style="text-align: center;">4</td>
+                        <td>@Model.OtherFeeNote (Phí khác)</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>@Model.OtherFee.ToString("N0")</td>
+                    </tr>
+                }
+                <tr class="total-row">
+                    <td colspan="5" style="text-align: right; text-transform: uppercase;"><strong>Tổng số tiền thanh toán:</strong></td>
+                    <td style="font-size: 18px;"><strong>@Model.TotalAmount.ToString("N0")</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="notes">
+            <strong>Ghi chú:</strong><br/>
+            - Quý khách vui lòng thanh toán đúng hạn quy định.<br/>
+            - Trạng thái hiện tại: 
+            <strong>
+            @if (Model.Status == Website_QLPT.Models.InvoiceStatus.Paid) { 
+                <span style="color: green;">ĐÃ THANH TOÁN (@(Model.PaidAt.HasValue ? Model.PaidAt.Value.ToString("dd/MM/yyyy HH:mm") : ""))</span> 
+            } else { 
+                <span style="color: red;">CHƯA THANH TOÁN</span> 
+            }
+            </strong>
+        </div>
+
+        <div class="signatures">
+            <div class="signature-box">
+                <div><strong>Người Thu Tiền</strong></div>
+                <div style="font-size: 12px;">(Ký, ghi rõ họ tên)</div>
+                <div class="signature-line"></div>
+            </div>
+            <div class="signature-box">
+                <div><strong>Người Nộp Tiền</strong></div>
+                <div style="font-size: 12px;">(Ký, ghi rõ họ tên)</div>
+                <div class="signature-line"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

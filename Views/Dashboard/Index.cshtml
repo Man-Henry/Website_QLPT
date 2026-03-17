@@ -1,0 +1,292 @@
+@model Website_QLPT.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@if (Model.UpcomingExpiryContracts.Any())
+{
+    <div class="alert alert-warning border-warning border-start border-4 mb-4" role="alert">
+        <h5 class="alert-heading text-warning-emphasis mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Cảnh báo Hợp đồng sắp hết hạn</h5>
+        <p class="mb-2">Bạn có <strong>@Model.UpcomingExpiryContracts.Count</strong> hợp đồng sắp hết hạn trong 30 ngày tới. Vui lòng liên hệ khách thuê để gia hạn hoặc làm thủ tục thanh lý.</p>
+        <hr class="border-warning-subtle">
+        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+            <table class="table table-sm table-borderless mb-0">
+                <thead class="table-warning text-dark">
+                    <tr>
+                        <th>Phòng</th>
+                        <th>Khách thuê</th>
+                        <th>Ngày kết thúc</th>
+                        <th>Còn lại</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contract in Model.UpcomingExpiryContracts)
+                    {
+                        var daysLeft = Math.Max(0, (contract.EndDate!.Value.Date - DateTime.Today).Days);
+                        var badgeClass = daysLeft <= 7 ? "bg-danger" : "bg-warning text-dark";
+                        <tr>
+                            <td>
+                                <a asp-controller="Contracts" asp-action="Details" asp-route-id="@contract.Id" class="text-decoration-none fw-bold text-dark">
+                                    @contract.Room?.Name
+                                </a>
+                            </td>
+                            <td>@contract.Tenant?.FullName</td>
+                            <td>@contract.EndDate.Value.ToString("dd/MM/yyyy")</td>
+                            <td><span class="badge @badgeClass">@daysLeft ngày</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#eef0fd; color:#4f6bed;">
+                <i class="bi bi-door-closed"></i>
+            </div>
+            <div class="stat-card-value">@Model.TotalRooms</div>
+            <div class="stat-card-label">Tổng số phòng</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#d1fae5; color:#059669;">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-card-value">@Model.AvailableRooms</div>
+            <div class="stat-card-label">Phòng đang trống</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#dbeafe; color:#1d4ed8;">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <div class="stat-card-value">@Model.RentedRooms</div>
+            <div class="stat-card-label">Phòng đã cho thuê</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#fef3c7; color:#b45309;">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <div class="stat-card-value">@Model.UnpaidInvoices</div>
+            <div class="stat-card-label">Hóa đơn chưa thu (tháng này)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#dbeafe; color:#2563eb;">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-card-value">@Model.MonthlyRevenue.ToString("N0")<small style="font-size:14px;" class="fw-normal text-muted ms-1">đ</small></div>
+            <div class="stat-card-label">Doanh thu tháng này</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#fce7f3; color:#9d174d;">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-card-value">@Model.TotalTenants</div>
+            <div class="stat-card-label">Tổng khách thuê</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#d1fae5; color:#065f46;">
+                <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <div class="stat-card-value">@Model.ActiveContracts</div>
+            <div class="stat-card-label">Hợp đồng đang hiệu lực</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-card-icon" style="background:#f3f4f6; color:#374151;">
+                <i class="bi bi-bar-chart-line"></i>
+            </div>
+            <div class="stat-card-value">@Model.OccupancyRate%</div>
+            <div class="stat-card-label">Tỷ lệ lấp đầy</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h6 class="card-qlpt-title"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Doanh thu 6 tháng gần nhất</h6>
+            </div>
+            <div class="card-qlpt-body">
+                <canvas id="revenueChart" style="height: 300px; width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h6 class="card-qlpt-title"><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Trạng thái Phòng</h6>
+            </div>
+            <div class="card-qlpt-body d-flex justify-content-center align-items-center">
+                <canvas id="roomStatusChart" style="max-height: 280px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h6 class="card-qlpt-title"><i class="bi bi-file-text me-2 text-secondary"></i>Hợp đồng đang hiệu lực gần nhất</h6>
+                <a asp-controller="Contracts" asp-action="Index" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                    Xem tất cả <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            @if (Model.RecentContracts.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table-qlpt">
+                        <thead>
+                            <tr>
+                                <th>Phòng</th>
+                                <th>Khu nhà</th>
+                                <th>Khách thuê</th>
+                                <th>Ngày bắt đầu</th>
+                                <th>Hạn hợp đồng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var contract in Model.RecentContracts)
+                            {
+                                <tr>
+                                    <td><strong>@contract.Room?.Name</strong></td>
+                                    <td class="text-muted">@contract.Room?.Property?.Name</td>
+                                    <td>@contract.Tenant?.FullName</td>
+                                    <td>@contract.StartDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (contract.EndDate.HasValue)
+                                        {
+                                            <span>@contract.EndDate.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Không thời hạn</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="card-qlpt-body text-center py-5 text-muted">
+                    <i class="bi bi-clipboard-x fs-2 d-block mb-2"></i>
+                    Chưa có hợp đồng nào đang hiệu lực.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h6 class="card-qlpt-title"><i class="bi bi-clock-history me-2 text-primary"></i>Lịch sử hoạt động gần đây</h6>
+            </div>
+            <div class="card-qlpt-body p-0">
+                @if (Model.RecentLogs.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var log in Model.RecentLogs)
+                        {
+                            var iconClass = log.ActionType switch
+                            {
+                                "MarkAsPaid" => "bi-cash text-success",
+                                "Terminate" => "bi-file-earmark-x text-danger",
+                                "SendEmail" => "bi-envelope text-primary",
+                                _ => "bi-info-circle text-secondary"
+                            };
+                            <li class="list-group-item" style="padding:12px 20px;font-size:0.9rem;">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi @iconClass me-2"></i>
+                                        <strong>@log.EntityName:</strong> @log.Details
+                                    </div>
+                                    <small class="text-muted">@log.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="text-center text-muted p-4">Chưa có hoạt động nào được ghi nhận.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctxRevenue, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(Model.RevenueLabelsJson),
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: @Html.Raw(Model.RevenueDataJson),
+                        backgroundColor: '#4f6bed',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: function(value) { return value.toLocaleString('vi-VN') + ' đ'; } }
+                        }
+                    }
+                }
+            });
+
+            var ctxStatus = document.getElementById('roomStatusChart').getContext('2d');
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đã thuê', 'Đang trống', 'Bảo trì'],
+                    datasets: [{
+                        data: @Html.Raw(Model.RoomStatusDataJson),
+                        backgroundColor: ['#059669', '#1d4ed8', '#6d28d9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } }
+                    }
+                }
+            });
+        });
+    </script>
+}

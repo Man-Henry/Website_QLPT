@@ -1,0 +1,87 @@
+@model Website_QLPT.Models.Room
+@{
+    ViewData["Title"] = "Thêm Phòng Mới";
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-plus-circle me-2 text-secondary"></i>Thêm Phòng Mới</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+</div>
+
+<div class="card-qlpt" style="max-width:700px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Name"></label>
+                    <input asp-for="Name" class="form-control" placeholder="VD: Phòng 101" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PropertyId">Khu nhà</label>
+                    <select asp-for="PropertyId" class="form-select" asp-items="ViewBag.PropertyId">
+                        <option value="">-- Chọn khu nhà --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Price"></label>
+                    <input asp-for="Price" type="number" min="0" class="form-control" placeholder="VD: 2500000" />
+                    <span asp-validation-for="Price" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Area"></label>
+                    <input asp-for="Area" class="form-control" placeholder="m²" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Status"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="0">Đang trống</option>
+                        <option value="1">Đã thuê</option>
+                        <option value="2">Bảo trì</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Note"></label>
+                <textarea asp-for="Note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="mb-4">
+                <label class="d-block mb-1" style="font-size:13px;font-weight:500;">Hình ảnh phòng</label>
+                <input type="file" name="images" class="form-control" multiple accept="image/*" id="imgInput" />
+                <div id="imgPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                <small class="text-muted">Chấp nhận JPG, PNG, WEBP. Chọn nhiều ảnh cùng lúc.</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-check-lg"></i> Tạo phòng</button>
+                <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('imgInput').addEventListener('change', function () {
+    const preview = document.getElementById('imgPreview');
+    preview.innerHTML = '';
+    Array.from(this.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = 'width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #e2e4e8;';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+}

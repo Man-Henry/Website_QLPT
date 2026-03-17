@@ -1,0 +1,202 @@
+@model Website_QLPT.ViewModels.InvoiceIndexViewModel
+@using X.PagedList.Mvc.Core
+@{
+    ViewData["Title"] = "Hóa Đơn";
+    int currentMonth = Model.Month;
+    int currentYear = Model.Year;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i>@TempData["Error"]
+    </div>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-receipt me-2 text-secondary"></i>Hóa Đơn Tháng @currentMonth/@currentYear</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportExcel" asp-route-month="@currentMonth" asp-route-year="@currentYear" asp-route-status="@Model.Status" class="btn-qlpt btn-success" style="border-radius:6px; font-weight:600; font-size:14px; padding: 6px 16px;">
+            <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </a>
+        <a asp-action="Create" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-plus-lg"></i> Tạo hóa đơn</a>
+    </div>
+</div>
+
+@* Filter *@
+<div class="card-qlpt mb-3">
+    <div class="card-qlpt-body py-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-sm-2">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Tháng</label>
+                <select name="month" class="form-select form-select-sm">
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        <option value="@m" selected="@(currentMonth == m)">Tháng @m</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Năm</label>
+                <select name="year" class="form-select form-select-sm">
+                    @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 3; y--)
+                    {
+                        <option value="@y" selected="@(currentYear == y)">@y</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Trạng thái</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Unpaid" selected="@(Model.Status == "Unpaid")">Chưa thu</option>
+                    <option value="Paid" selected="@(Model.Status == "Paid")">Đã thu</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary w-100" style="justify-content:center;">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Summary cards *@
+@if (Model.Invoices.Any())
+{
+    <div class="row g-3 mb-3">
+        <div class="col-sm-4">
+            <div class="card-qlpt">
+                <div class="card-qlpt-body" style="padding:16px;">
+                    <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">Tổng số hóa đơn</div>
+                    <div style="font-size:26px;font-weight:700;color:#111;margin-top:4px;">@Model.TotalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card-qlpt">
+                <div class="card-qlpt-body" style="padding:16px;">
+                    <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">Đã thu</div>
+                    <div style="font-size:18px;font-weight:700;color:#22c55e;margin-top:4px;">@Model.TotalPaid.ToString("N0") <small style="font-size:12px;color:#9ca3af;">VND</small></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card-qlpt">
+                <div class="card-qlpt-body" style="padding:16px;">
+                    <div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">Chưa thu</div>
+                    <div style="font-size:18px;font-weight:700;color:#ef4444;margin-top:4px;">@Model.TotalUnpaid.ToString("N0") <small style="font-size:12px;color:#9ca3af;">VND</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card-qlpt">
+    @if (Model.Invoices.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt" style="font-size:13px;">
+                <thead>
+                    <tr>
+                        <th>Phòng / Khách thuê</th>
+                        <th style="text-align:right;">Tiền phòng</th>
+                        <th style="text-align:right;">Tiền điện</th>
+                        <th style="text-align:right;">Tiền nước</th>
+                        <th style="text-align:right;">Phí khác</th>
+                        <th style="text-align:right;font-weight:700;">Tổng cộng</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inv in Model.Invoices)
+                    {
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>@inv.Contract?.Room?.Name</strong>
+                                    <div style="font-size:11px;color:#9ca3af;">@inv.Contract?.Room?.Property?.Name · @inv.Contract?.Tenant?.FullName</div>
+                                </div>
+                            </td>
+                            <td style="text-align:right;">@inv.RoomFee.ToString("N0")</td>
+                            <td style="text-align:right;">@inv.ElectricityFee.ToString("N0")</td>
+                            <td style="text-align:right;">@inv.WaterFee.ToString("N0")</td>
+                            <td style="text-align:right;">@inv.OtherFee.ToString("N0")</td>
+                            <td style="text-align:right;font-weight:700;">@inv.TotalAmount.ToString("N0") <small class="text-muted">VND</small></td>
+                            <td>
+                                @if (inv.Status == Website_QLPT.Models.InvoiceStatus.Paid)
+                                {
+                                    <span class="badge-qlpt badge-available"><i class="bi bi-check-circle"></i> Đã thu</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-qlpt badge-maintenance"><i class="bi bi-clock"></i> Chưa thu</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Details" asp-route-id="@inv.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm"><i class="bi bi-eye"></i></a>
+                                    @if (inv.Status == Website_QLPT.Models.InvoiceStatus.Unpaid)
+                                    {
+                                        <form asp-action="MarkAsPaid" asp-route-id="@inv.Id" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn-qlpt btn-qlpt-primary btn-qlpt-sm" title="Đánh dấu đã thu">
+                                                <i class="bi bi-cash-coin"></i> Đã thu
+                                            </button>
+                                        </form>
+                                        
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <form asp-action="SendEmailInvoice" asp-route-id="@inv.Id" method="post" onsubmit="return confirm('Gửi email thông báo cho hóa đơn này?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-qlpt btn-qlpt-sm" style="background-color: #ef4444; color: white;" title="Gửi Email">
+                                                    <i class="bi bi-envelope"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Invoices.PageCount > 1)
+        {
+            <div class="card-qlpt-body border-top py-3 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Hiển thị @Model.Invoices.FirstItemOnPage đến @Model.Invoices.LastItemOnPage trong tổng số @Model.Invoices.TotalItemCount hóa đơn
+                </div>
+                <div>
+                    @Html.PagedListPager(Model.Invoices, page => Url.Action("Index", new { page, month = Model.Month, year = Model.Year, status = Model.Status }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-receipt fs-2 d-block mb-2"></i>
+            Không có hóa đơn nào trong tháng @currentMonth/@currentYear.
+            <div class="mt-2"><a asp-action="Create">Tạo hóa đơn mới</a></div>
+        </div>
+    }
+</div>

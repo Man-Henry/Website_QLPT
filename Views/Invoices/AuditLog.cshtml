@@ -1,0 +1,95 @@
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<Website_QLPT.Models.AuditLog>
+@{
+    ViewData["Title"] = "Lịch Sử Hoạt Động";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-clock-history me-2 text-secondary"></i>Lịch Sử Hoạt Động</h1>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt" style="font-size:13px;">
+                <thead>
+                    <tr>
+                        <th style="width:160px;">Thời gian</th>
+                        <th style="width:140px;">Hành động</th>
+                        <th style="width:100px;">Đối tượng</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td style="color:#6b7280; font-size:12px; white-space:nowrap;">
+                                <i class="bi bi-calendar3 me-1"></i>@log.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td>
+                                @{
+                                    var (badgeClass, icon) = log.ActionType switch
+                                    {
+                                        "SendEmail"  => ("badge-qlpt" , "bi-envelope-check"),
+                                        "MarkAsPaid" => ("badge-qlpt badge-available", "bi-cash-coin"),
+                                        "Terminate"  => ("badge-qlpt badge-maintenance", "bi-x-circle"),
+                                        "Create"     => ("badge-qlpt", "bi-plus-circle"),
+                                        _            => ("badge-qlpt", "bi-activity")
+                                    };
+                                }
+                                <span class="@badgeClass" style="@(log.ActionType == "SendEmail" ? "background:#dbeafe;color:#1d4ed8;" : "")">
+                                    <i class="bi @icon"></i> @log.ActionType
+                                </span>
+                            </td>
+                            <td style="color:#6b7280;">
+                                @log.EntityName
+                                @if (log.EntityId.HasValue)
+                                {
+                                    <small class="text-muted">#@log.EntityId</small>
+                                }
+                            </td>
+                            <td style="color:#374151;">@log.Details</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.PageCount > 1)
+        {
+            <div class="card-qlpt-body border-top py-3 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Hiển thị @Model.FirstItemOnPage đến @Model.LastItemOnPage trong tổng số @Model.TotalItemCount bản ghi
+                </div>
+                <div>
+                    @Html.PagedListPager(Model, page => Url.Action("AuditLog", new { page }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-clock-history fs-2 d-block mb-2"></i>
+            Chưa có lịch sử hoạt động nào.
+        </div>
+    }
+</div>

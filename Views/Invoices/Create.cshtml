@@ -1,0 +1,147 @@
+@model Website_QLPT.Models.Invoice
+@{
+    ViewData["Title"] = "Tạo Hóa Đơn";
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-receipt me-2 text-secondary"></i>Tạo Hóa Đơn Tháng</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+</div>
+
+<div class="card-qlpt" style="max-width:760px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Create" method="post" class="form-qlpt" id="invoiceForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @* Hợp đồng & Kỳ *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label class="form-label" style="font-size:13px;font-weight:600;">Hợp đồng (phòng đang thuê)</label>
+                    <select asp-for="ContractId" class="form-select" asp-items="ViewBag.ContractId">
+                        <option value="">-- Chọn hợp đồng --</option>
+                    </select>
+                    <span asp-validation-for="ContractId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Month"></label>
+                    <input asp-for="Month" class="form-control" type="number" min="1" max="12" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Year"></label>
+                    <input asp-for="Year" class="form-control" type="number" min="2020" max="2099" />
+                </div>
+            </div>
+
+            @* Electricity *@
+            <div class="card-qlpt mb-3" style="border:1px solid #e2e4e8;box-shadow:none;">
+                <div class="card-qlpt-body" style="padding:16px;">
+                    <h6 class="mb-3" style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">
+                        <i class="bi bi-lightning-charge me-1 text-warning"></i> SỐ ĐIỆN
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label asp-for="ElectricityOld" style="font-size:13px;"></label>
+                            <input asp-for="ElectricityOld" class="form-control calc-input" placeholder="0" id="eOld" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="ElectricityNew" style="font-size:13px;"></label>
+                            <input asp-for="ElectricityNew" class="form-control calc-input" placeholder="0" id="eNew" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="ElectricityPrice" style="font-size:13px;"></label>
+                            <input asp-for="ElectricityPrice" class="form-control calc-input" id="ePrice" />
+                        </div>
+                        <div class="col-md-3">
+                            <label style="font-size:13px;font-weight:500;display:block;">Thành tiền</label>
+                            <div id="eResult" style="font-size:16px;font-weight:700;color:#111;padding:8px 0;">0 VND</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Water *@
+            <div class="card-qlpt mb-3" style="border:1px solid #e2e4e8;box-shadow:none;">
+                <div class="card-qlpt-body" style="padding:16px;">
+                    <h6 class="mb-3" style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">
+                        <i class="bi bi-droplet me-1 text-primary"></i> SỐ NƯỚC
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label asp-for="WaterOld" style="font-size:13px;"></label>
+                            <input asp-for="WaterOld" class="form-control calc-input" placeholder="0" id="wOld" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="WaterNew" style="font-size:13px;"></label>
+                            <input asp-for="WaterNew" class="form-control calc-input" placeholder="0" id="wNew" />
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="WaterPrice" style="font-size:13px;"></label>
+                            <input asp-for="WaterPrice" class="form-control calc-input" id="wPrice" />
+                        </div>
+                        <div class="col-md-3">
+                            <label style="font-size:13px;font-weight:500;display:block;">Thành tiền</label>
+                            <div id="wResult" style="font-size:16px;font-weight:700;color:#111;padding:8px 0;">0 VND</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Room fee & Others *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="RoomFee"></label>
+                    <div class="input-group">
+                        <input asp-for="RoomFee" class="form-control calc-input" id="roomFee" placeholder="0" />
+                        <span class="input-group-text" style="font-size:12px;color:#6b7280;background:#f9fafb;border-color:#e2e4e8;">VND</span>
+                    </div>
+                    <span asp-validation-for="RoomFee" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="OtherFee"></label>
+                    <div class="input-group">
+                        <input asp-for="OtherFee" class="form-control calc-input" id="otherFee" placeholder="0" />
+                        <span class="input-group-text" style="font-size:12px;color:#6b7280;background:#f9fafb;border-color:#e2e4e8;">VND</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="OtherFeeNote"></label>
+                <input asp-for="OtherFeeNote" class="form-control" placeholder="VD: Phí dịch vụ vệ sinh, xe..." />
+            </div>
+
+            @* Total summary *@
+            <div style="background:#f9fafb;border:1px solid #e2e4e8;border-radius:10px;padding:16px;margin-bottom:20px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size:14px;font-weight:600;color:#374151;">TỔNG CỘNG DỰ KIẾN</span>
+                    <span id="grandTotal" style="font-size:22px;font-weight:800;color:#111;">0 VND</span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-check-lg"></i> Tạo hóa đơn</button>
+                <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function fmt(n) { return n.toLocaleString('vi-VN') + ' VND'; }
+function val(id) { return parseFloat(document.getElementById(id)?.value) || 0; }
+
+function calcAll() {
+    const eFee = Math.max(0, val('eNew') - val('eOld')) * val('ePrice');
+    const wFee = Math.max(0, val('wNew') - val('wOld')) * val('wPrice');
+    document.getElementById('eResult').textContent = fmt(eFee);
+    document.getElementById('wResult').textContent = fmt(wFee);
+    const total = eFee + wFee + val('roomFee') + val('otherFee');
+    document.getElementById('grandTotal').textContent = fmt(total);
+}
+
+document.querySelectorAll('.calc-input').forEach(el => el.addEventListener('input', calcAll));
+calcAll();
+</script>
+}

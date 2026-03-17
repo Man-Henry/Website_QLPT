@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Website_QLPT", "Website_QLPT.csproj", "{EE4DA82C-2251-7016-7C21-191BF0FE793C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE4DA82C-2251-7016-7C21-191BF0FE793C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE4DA82C-2251-7016-7C21-191BF0FE793C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE4DA82C-2251-7016-7C21-191BF0FE793C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE4DA82C-2251-7016-7C21-191BF0FE793C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E497D4C4-471C-4C2E-88DC-04FAE614822F}
+	EndGlobalSection
+EndGlobal

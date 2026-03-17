@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ===== SEO: Dynamic Meta ===== -->
+    <title>@ViewData["Title"] - QLPT Phòng Trọ</title>
+    <meta name="description" content="@(ViewData["MetaDescription"] ?? "Tìm phòng trọ nhanh chóng, đa dạng khu vực, giá rẻ phù hợp sinh viên và người đi làm tại TP.HCM.")">
+    <link rel="canonical" href="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")" />
+
+    <!-- ===== SEO: Open Graph ===== -->
+    <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
+    <meta property="og:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] + " - QLPT Phòng Trọ")" />
+    <meta property="og:description" content="@(ViewData["MetaDescription"] ?? "Tìm phòng trọ nhanh chóng, đa dạng khu vực, giá rẻ phù hợp sinh viên và người đi làm.")" />
+    <meta property="og:image" content="@(ViewData["OgImage"] ?? $"{Context.Request.Scheme}://{Context.Request.Host}/images/og-default.jpg")" />
+    <meta property="og:url" content="@($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}")" />
+    <meta property="og:site_name" content="QLPT Phòng Trọ" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <!-- ===== SEO: Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"])" />
+    <meta name="twitter:description" content="@(ViewData["MetaDescription"] ?? "Tìm phòng trọ nhanh chóng, đa dạng khu vực.")" />
+    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? $"{Context.Request.Scheme}://{Context.Request.Host}/images/og-default.jpg")" />
+
+    <!-- ===== Performance: Resource Hints ===== -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://unpkg.com" />
+
+    <!-- Google Fonts (display=swap giảm FOIT) -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
+    @* Leaflet CSS — chỉ load trong view có bản đồ qua @section Styles *@
+    @await RenderSectionAsync("Styles", required: false)
+    <style>
+        :root {
+            --primary: #1a3c5e;
+            --accent: #f97316;
+            --accent-light: #fff7ed;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-muted: #64748b;
+            --radius: 12px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; background: var(--bg); color: #1e293b; }
+
+        /* ===== SITE HEADER ===== */
+        .site-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #2d6a9f 100%);
+            padding: 0;
+        }
+        .site-header .header-inner {
+            display: flex;
+            align-items: stretch;
+            min-height: 80px;
+        }
+        .site-header .logo-box {
+            display: flex;
+            align-items: center;
+            padding: 12px 28px;
+            background: rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+        .site-header .logo-box .brand-name {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.3rem;
+            line-height: 1.2;
+            text-decoration: none;
+        }
+        .site-header .logo-box .brand-name span { color: var(--accent); }
+        .site-header .logo-box .brand-sub {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+            display: block;
+        }
+        .site-header .banner-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 12px 28px;
+            background: linear-gradient(90deg, rgba(41,98,145,0.7) 0%, transparent 60%),
+                        url('https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80') center/cover;
+        }
+        .site-header .banner-tagline {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.15rem;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .site-header .banner-tagline small {
+            display: block;
+            font-weight: 400;
+            font-size: 0.85rem;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+
+        /* ===== NAVBAR ===== */
+        .site-nav {
+            background: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .site-nav .nav-inner {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .site-nav .nav-links {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        .site-nav .nav-links a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 14px 18px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+            transition: all 0.2s;
+        }
+        .site-nav .nav-links a:hover,
+        .site-nav .nav-links a.active {
+            color: #fff;
+            border-bottom-color: var(--accent);
+            background: rgba(255,255,255,0.08);
+        }
+        .site-nav .nav-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+        .site-nav .nav-search input {
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            width: 200px;
+            outline: none;
+        }
+        .site-nav .nav-search input:focus { box-shadow: 0 0 0 2px var(--accent); }
+        .site-nav .nav-auth {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+        }
+        .btn-nav-login {
+            padding: 6px 16px;
+            border: 1.5px solid rgba(255,255,255,0.6);
+            background: transparent;
+            color: #fff;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-nav-login:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-nav-register {
+            padding: 6px 16px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-nav-register:hover { background: #ea6c05; color: #fff; }
+        .btn-nav-dashboard {
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: #fff;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-nav-dashboard:hover { background: rgba(255,255,255,0.25); color: #fff; }
+
+        /* ===== BREADCRUMB ===== */
+        .page-breadcrumb {
+            background: #e2e8f0;
+            padding: 8px 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .page-breadcrumb a { color: var(--primary); text-decoration: none; }
+
+        /* ===== SIDEBAR WIDGET ===== */
+        .widget {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+        .widget-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .widget-body { padding: 16px; }
+
+        /* ===== CARDS ===== */
+        .room-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+        .room-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+        }
+        .room-card img { width: 100%; height: 175px; object-fit: cover; }
+        .room-card .card-body { padding: 14px; }
+        .room-card .room-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .room-card .room-price {
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+        .room-card .room-meta {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        .btn-view {
+            display: block;
+            text-align: center;
+            padding: 7px 0;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-view:hover { background: #2d6a9f; color: #fff; }
+
+        /* ===== FEATURED ROOM ===== */
+        .featured-room-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 22px;
+            display: flex;
+            transition: box-shadow 0.2s;
+        }
+        .featured-room-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.14); }
+        .featured-room-card .feat-img {
+            width: 280px;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+        .featured-room-card .feat-body {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .badge-featured {
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .badge-available {
+            background: #dcfce7;
+            color: #15803d;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* ===== SECTION HEADER ===== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .section-header h2 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+        }
+        .section-header .section-count {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== STAT WIDGET ===== */
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .stat-num { font-weight: 800; font-size: 1.2rem; line-height: 1; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* ===== FOOTER ===== */
+        .site-footer {
+            background: var(--primary);
+            color: rgba(255,255,255,0.8);
+            padding: 36px 0 16px;
+            margin-top: 40px;
+        }
+        .site-footer h6 {
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+        .site-footer a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: block;
+            padding: 2px 0;
+            transition: color 0.2s;
+        }
+        .site-footer a:hover { color: var(--accent); }
+        .site-footer .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            margin-top: 24px;
+            padding-top: 14px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* ===== MISC ===== */
+        .empty-state { text-align: center; padding: 48px 0; color: var(--text-muted); }
+        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+        @@media (max-width: 768px) {
+            .site-header .banner-box { display: none; }
+            .featured-room-card { flex-direction: column; }
+            .featured-room-card .feat-img { width: 100%; height: 200px; }
+            .site-nav .nav-search input { width: 130px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== SITE HEADER ===== -->
+<header class="site-header d-none d-md-block">
+    <div class="container-fluid px-0">
+        <div class="header-inner">
+            <div class="logo-box">
+                <a class="brand-name" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-buildings-fill me-2" style="font-size:1.6rem; color:var(--accent);"></i>
+                    QLPT <span>Phòng Trọ</span>
+                    <span class="brand-sub">Hệ thống tìm & quản lý phòng trọ</span>
+                </a>
+            </div>
+            <div class="banner-box">
+                <div class="banner-tagline">
+                    🏠 Tìm phòng trọ phù hợp với bạn
+                    <small>Hàng trăm căn phòng chất lượng · Giá tốt · Vị trí thuận tiện</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="site-nav">
+    <div class="container-fluid px-3">
+        <div class="nav-inner flex-wrap">
+            <!-- Mobile logo -->
+            <a class="d-md-none text-white fw-bold text-decoration-none py-2 me-auto" style="font-size:1rem;"
+               asp-controller="Home" asp-action="Index">
+                <i class="bi bi-buildings-fill me-1" style="color:var(--accent);"></i>QLPT
+            </a>
+
+            <!-- Nav links -->
+            <div class="nav-links">
+                @{
+                    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+                    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+                }
+                <a asp-controller="Home" asp-action="Index"
+                   class="@(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                    <i class="bi bi-house-fill"></i> Trang Chủ
+                </a>
+                <a asp-controller="Home" asp-action="AllRooms"
+                   class="@(currentAction == "AllRooms" ? "active" : "")">
+                    <i class="bi bi-search"></i> Tìm Phòng
+                </a>
+                <a href="#site-footer" onclick="document.getElementById('site-footer').scrollIntoView({behavior:'smooth'}); return false;"
+                   class="@(currentAction == "Contact" ? "active" : "")">
+                    <i class="bi bi-telephone-fill"></i> Liên Hệ
+                </a>
+            </div>
+
+            <!-- Search -->
+            <form class="nav-search d-none d-lg-flex" method="get" asp-controller="Home" asp-action="Index">
+                <input type="text" name="keyword" placeholder="Tìm phòng, khu nhà..." value="@ViewBag.Keyword">
+                <button type="submit" style="background:var(--accent); border:none; border-radius:20px; color:#fff; padding:6px 14px; font-size:0.82rem;">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+
+            <!-- Auth buttons -->
+            <div class="nav-auth">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    if (User.IsInRole("Admin"))
+                    {
+                        <a class="btn-nav-dashboard" asp-controller="Dashboard" asp-action="Index">
+                            <i class="bi bi-speedometer2 me-1"></i>Quản Trị
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn-nav-dashboard" asp-controller="TenantDashboard" asp-action="Index">
+                            <i class="bi bi-person-badge me-1"></i>Trang Của Tôi
+                        </a>
+                    }
+                    <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-nav-login">Đăng xuất</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="btn-nav-login" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a>
+                    <a class="btn-nav-register" asp-area="Identity" asp-page="/Account/Register">Đăng ký</a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="page-breadcrumb d-none d-md-block">
+    <div class="container-fluid px-3">
+        <i class="bi bi-house-door me-1"></i>
+        <a href="/">Trang chủ</a>
+        @if (ViewData["Title"] != null && ViewData["Title"]?.ToString() != "Trang Chủ - Tìm Phòng Trọ")
+        {
+            <span class="mx-1">›</span><span>@ViewData["Title"]</span>
+        }
+    </div>
+</div>
+
+<!-- ===== BODY ===== -->
+<main role="main" class="py-3">
+    @RenderBody()
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer" id="site-footer">
+    <div class="container-fluid px-4">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h6><i class="bi bi-buildings-fill me-2" style="color:var(--accent);"></i>QLPT Phòng Trọ</h6>
+                <p style="font-size:0.83rem; line-height:1.6;">
+                    Hệ thống quản lý và tìm kiếm phòng trọ trực tuyến hàng đầu.
+                    Kết nối chủ nhà và người thuê nhanh chóng, tiện lợi.
+                </p>
+                <div class="d-flex gap-2 mt-2">
+                    <a href="#" style="display:inline;padding:0;"><i class="bi bi-facebook fs-5"></i></a>
+                    <a href="#" style="display:inline;padding:0;margin-left:8px;"><i class="bi bi-youtube fs-5"></i></a>
+                    <a href="#" style="display:inline;padding:0;margin-left:8px;"><i class="bi bi-tiktok fs-5"></i></a>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <h6>Liên kết</h6>
+                <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+                <a asp-controller="Home" asp-action="Index">Tìm phòng</a>
+                <a asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a>
+                <a asp-area="Identity" asp-page="/Account/Register">Đăng ký</a>
+            </div>
+            <div class="col-md-3">
+                <h6>Dành cho Chủ Nhà</h6>
+                <a asp-area="Identity" asp-page="/Account/Register">Đăng ký tài khoản chủ nhà</a>
+                <a asp-controller="Dashboard" asp-action="Index">Quản lý khu nhà</a>
+                <a asp-controller="Rooms" asp-action="Index">Quản lý phòng</a>
+                <a asp-controller="Invoices" asp-action="Index">Quản lý hóa đơn</a>
+            </div>
+            <div class="col-md-3">
+                <h6><i class="bi bi-geo-alt me-1"></i>Liên Hệ</h6>
+                <p style="font-size:0.83rem; line-height:1.8; margin:0;">
+                    <i class="bi bi-telephone me-2"></i>0901 234 567<br>
+                    <i class="bi bi-envelope me-2"></i>contact@qlpt.vn<br>
+                    <i class="bi bi-geo-alt me-2"></i>TP. Hồ Chí Minh, Việt Nam
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 - QLPT Hệ Thống Quản Lý Phòng Trọ &mdash; All rights reserved.
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS (defer — non-critical) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+@* Leaflet, Chart.js — load trong từng view có nhu cầu qua @section Scripts *@
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

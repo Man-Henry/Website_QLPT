@@ -1,0 +1,356 @@
+@model IEnumerable<Website_QLPT.Models.Room>
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Trang Chủ - Tìm Phòng Trọ";
+    ViewData["MetaDescription"] = "Tìm phòng trọ nhanh chóng tại TP.HCM — Hàng trăm phòng trống, giá từ 1 triệu/tháng. Lọc theo giá, diện tích, khu vực. Xem bản đồ và liên hệ chủ nhà ngay!";
+    ViewData["OgTitle"] = "QLPT Phòng Trọ — Tìm Phòng Nhanh, Giá Tốt tại TP.HCM";
+    var featured = ViewBag.FeaturedRoom as Website_QLPT.Models.Room;
+    var rooms = Model.ToList();
+    // Bỏ featured room ra khỏi grid nếu trùng
+    var gridRooms = featured != null ? rooms.Where(r => r.Id != featured.Id).Take(6).ToList() : rooms.Take(6).ToList();
+}
+
+<div class="container-fluid px-3">
+    <div class="row g-3">
+
+        <!-- ======= LEFT SIDEBAR ======= -->
+        <div class="col-lg-2 col-md-3">
+
+            <!-- Bộ lọc phòng -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-funnel-fill"></i> Lọc Phòng
+                </div>
+                <div class="widget-body p-2">
+                    <form method="get" asp-controller="Home" asp-action="Index">
+                        <div class="mb-2">
+                            <label class="form-label text-muted" style="font-size:0.75rem; font-weight:700;">TỪ KHOÁ</label>
+                            <input type="text" name="keyword" class="form-control form-control-sm" 
+                                   value="@ViewBag.Keyword" placeholder="Tên phòng, khu nhà...">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted" style="font-size:0.75rem; font-weight:700;">GIÁ TỪ (VNĐ)</label>
+                            <input type="number" name="minPrice" min="0" step="500000" class="form-control form-control-sm" 
+                                   value="@ViewBag.MinPrice" placeholder="VD: 1000000">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted" style="font-size:0.75rem; font-weight:700;">ĐẾN GIÁ (VNĐ)</label>
+                            <input type="number" name="maxPrice" min="0" step="500000" class="form-control form-control-sm" 
+                                   value="@ViewBag.MaxPrice" placeholder="Không giới hạn">
+                        </div>
+                        <button type="submit" class="btn w-100 btn-sm text-white fw-700" 
+                                style="background:var(--primary); border-radius:8px; font-weight:700;">
+                            <i class="bi bi-search me-1"></i>Tìm kiếm
+                        </button>
+                        @if (ViewBag.Keyword != null || ViewBag.MinPrice != null || ViewBag.MaxPrice != null)
+                        {
+                            <a asp-controller="Home" asp-action="Index" 
+                               class="btn btn-outline-secondary w-100 btn-sm mt-2" style="border-radius:8px;">
+                                <i class="bi bi-x-circle me-1"></i>Xoá bộ lọc
+                            </a>
+                        }
+                    </form>
+                </div>
+            </div>
+
+            <!-- Khoảng giá nhanh -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-cash-stack"></i> Khoảng Giá Nhanh
+                </div>
+                <div class="widget-body p-2">
+                    @{
+                        var priceRanges = new[] {
+                            ("Dưới 1 triệu", "0", "1000000"),
+                            ("1 - 2 triệu", "1000000", "2000000"),
+                            ("2 - 3 triệu", "2000000", "3000000"),
+                            ("3 - 5 triệu", "3000000", "5000000"),
+                            ("Trên 5 triệu", "5000000", "")
+                        };
+                    }
+                    @foreach (var (label, min, max) in priceRanges)
+                    {
+                        <a asp-controller="Home" asp-action="Index"
+                           asp-route-minPrice="@min" asp-route-maxPrice="@max"
+                           class="d-flex justify-content-between align-items-center text-decoration-none px-2 py-1 rounded mb-1"
+                           style="font-size:0.8rem; color:#334155; transition:background 0.2s;"
+                           onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
+                            <span><i class="bi bi-arrow-right-short me-1 text-orange"></i>@label</span>
+                        </a>
+                    }
+                </div>
+            </div>
+
+        </div><!-- /LEFT SIDEBAR -->
+
+        <!-- ======= MAIN CONTENT ======= -->
+        <div class="col-lg-7 col-md-9">
+
+            @* --- FEATURED ROOM --- *@
+            @if (featured != null)
+            {
+                var featImg = featured.Images?.FirstOrDefault(i => i.IsThumbnail)?.ImagePath
+                           ?? featured.Images?.FirstOrDefault()?.ImagePath
+                           ?? "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=80";
+                <div class="section-header">
+                    <i class="bi bi-star-fill text-warning"></i>
+                    <h2>Phòng Nổi Bật</h2>
+                </div>
+                <a asp-controller="Home" asp-action="RoomDetails" asp-route-id="@featured.Id"
+                   class="text-decoration-none">
+                    <div class="featured-room-card mb-4">
+                        <img src="@featImg" alt="@featured.Name" class="feat-img d-none d-sm-block">
+                        <div class="feat-body">
+                            <div class="d-flex gap-2 mb-1">
+                                <span class="badge-featured"><i class="bi bi-star-fill me-1"></i>Nổi Bật</span>
+                                <span class="badge-available"><i class="bi bi-check-circle me-1"></i>Còn Trống</span>
+                            </div>
+                            <div style="font-size:1.2rem; font-weight:800; color:var(--primary); margin-bottom:6px;">@featured.Name</div>
+                            <div class="d-flex align-items-center gap-1 mb-2" style="font-size:0.83rem; color:#64748b;">
+                                <i class="bi bi-geo-alt-fill text-danger"></i>
+                                @(featured.Property?.Name ?? "Khu nhà") &mdash; @(featured.Property?.Address ?? "")
+                            </div>
+                            <div class="d-flex align-items-center gap-3 mb-3" style="font-size:0.83rem; color:#64748b;">
+                                <span><i class="bi bi-rulers me-1"></i>@featured.Area m²</span>
+                            </div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--accent);">
+                                @featured.Price.ToString("N0") <small style="font-size:0.85rem; color:#94a3b8;">VNĐ/tháng</small>
+                            </div>
+                            <span class="btn-view d-inline-block mt-3" style="width:auto; padding:8px 24px;">
+                                <i class="bi bi-eye me-1"></i>Xem chi tiết
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            }
+
+            @* --- ROOM GRID --- *@
+            <div class="section-header">
+                <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+                <h2>Danh Sách Phòng Đang Trống</h2>
+                <span class="section-count">@Model.Count() phòng</span>
+            </div>
+
+            @if (gridRooms.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var room in gridRooms)
+                    {
+                        var thumb = room.Images?.FirstOrDefault(i => i.IsThumbnail)?.ImagePath
+                                 ?? room.Images?.FirstOrDefault()?.ImagePath
+                                 ?? "https://images.unsplash.com/photo-1505873242700-f289a29e1e0f?w=600&q=80";
+                        <div class="col-md-4 col-sm-6">
+                            <div class="room-card">
+                                <div style="position:relative; overflow:hidden;">
+                                    <img src="@thumb" alt="@room.Name" style="width:100%; height:175px; object-fit:cover; transition:transform 0.3s;">
+                                    <div style="position:absolute; top:8px; right:8px; background:var(--accent); color:#fff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:20px;">
+                                        Trống
+                                    </div>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="room-name">@room.Name</div>
+                                    <div class="room-meta">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                        @(room.Property?.Name ?? "Khu nhà")
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span style="font-size:0.78rem; color:#64748b;">
+                                            <i class="bi bi-rulers me-1"></i>@room.Area m²
+                                        </span>
+                                        <span class="room-price" style="font-size:0.95rem;">@room.Price.ToString("N0") đ</span>
+                                    </div>
+                                    <a asp-controller="Home" asp-action="RoomDetails" asp-route-id="@room.Id" class="btn-view">
+                                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Count() > 7)
+                {
+                    <div class="text-center mt-4">
+                        <a asp-controller="Home" asp-action="AllRooms"
+                           asp-route-keyword="@ViewBag.Keyword"
+                           asp-route-minPrice="@ViewBag.MinPrice"
+                           asp-route-maxPrice="@ViewBag.MaxPrice"
+                           class="btn px-5 py-2 fw-bold text-white"
+                           style="background:var(--primary); border-radius:30px;">
+                            <i class="bi bi-grid-3x3-gap-fill me-2"></i>Xem tất cả phòng
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state widget py-5">
+                    <i class="bi bi-house-slash"></i>
+                    <p class="fw-bold">Không tìm thấy phòng nào phù hợp</p>
+                    <p style="font-size:0.85rem; color:#94a3b8;">Thử thay đổi bộ lọc hoặc kiểm tra lại sau.</p>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill">
+                        Xem tất cả phòng
+                    </a>
+                </div>
+            }
+        </div><!-- /MAIN CONTENT -->
+
+        <!-- ======= RIGHT SIDEBAR ======= -->
+        <div class="col-lg-3 d-none d-lg-block">
+
+            <!-- Thống kê -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-bar-chart-fill"></i> Thống Kê Phòng Trọ
+                </div>
+                <div class="widget-body">
+                    <div class="stat-item">
+                        <div class="stat-icon" style="background:#eff6ff; color:#1d4ed8;">
+                            <i class="bi bi-door-open-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stat-num" style="color:#1d4ed8;">@(ViewBag.TotalRooms ?? 0)</div>
+                            <div class="stat-label">Tổng số phòng</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon" style="background:#f0fdf4; color:#16a34a;">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stat-num" style="color:#16a34a;">@(ViewBag.TotalAvailable ?? 0)</div>
+                            <div class="stat-label">Phòng đang trống</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon" style="background:#fff7ed; color:#ea580c;">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stat-num" style="color:#ea580c;">@(ViewBag.TotalRented ?? 0)</div>
+                            <div class="stat-label">Phòng đã thuê</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Map -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-map-fill"></i> Bản Đồ Khu Nhà
+                </div>
+                <div id="minimap" style="height:200px; border-radius:0 0 12px 12px;"></div>
+            </div>
+
+            <!-- Biểu đồ phòng -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-pie-chart-fill"></i> Tình Trạng Phòng
+                </div>
+                <div class="widget-body" style="padding:12px;">
+                    <canvas id="roomStatusChart" height="160"></canvas>
+                </div>
+            </div>
+
+            <!-- Liên hệ nhanh -->
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="bi bi-telephone-fill"></i> Liên Hệ Nhanh
+                </div>
+                <div class="widget-body text-center">
+                    <div style="font-size:1.5rem; font-weight:800; color:var(--accent);">0901 234 567</div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-bottom:10px;">Hỗ trợ 7:00 - 22:00 mỗi ngày</div>
+                    <a href="tel:0901234567" class="btn-view d-block">
+                        <i class="bi bi-telephone-fill me-1"></i>Gọi ngay
+                    </a>
+                </div>
+            </div>
+
+        </div><!-- /RIGHT SIDEBAR -->
+
+    </div><!-- /row -->
+</div>
+
+@section Scripts {
+<!-- Leaflet + Chart.js (only on homepage) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mini Map
+    var minimap = L.map('minimap', {
+        zoomControl: false, scrollWheelZoom: false, dragging: false, touchZoom: false,
+        doubleClickZoom: false, boxZoom: false, keyboard: false
+    }).setView([10.776, 106.693], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(minimap);
+    setTimeout(() => minimap.invalidateSize(), 300);
+
+    // Doughnut Chart
+    var ctx = document.getElementById('roomStatusChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Đang trống', 'Đã thuê', 'Bảo trì'],
+            datasets: [{
+                data: [@(ViewBag.TotalAvailable ?? 0), @(ViewBag.TotalRented ?? 0), 0],
+                backgroundColor: ['#22c55e', '#f97316', '#94a3b8'],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { family: 'Nunito', size: 11 }, padding: 10 }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+});
+</script>
+
+<!-- JSON-LD: LocalBusiness -->
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "LocalBusiness",
+  "name": "QLPT Phòng Trọ",
+  "description": "Hệ thống tìm kiếm và quản lý phòng trọ trực tuyến tại TP. Hồ Chí Minh",
+  "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")",
+  "telephone": "+84901234567",
+  "address": {
+    "@@type": "PostalAddress",
+    "addressLocality": "TP. Hồ Chí Minh",
+    "addressCountry": "VN"
+  },
+  "openingHoursSpecification": {
+    "@@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "07:00",
+    "closes": "22:00"
+  }
+}
+</script>
+
+<!-- JSON-LD: WebSite SearchAction -->
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "WebSite",
+  "name": "QLPT Phòng Trọ",
+  "url": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")",
+  "potentialAction": {
+    "@@type": "SearchAction",
+    "target": "@($"{Context.Request.Scheme}://{Context.Request.Host}/Home/AllRooms?keyword={"{search_term_string}"}")",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+}

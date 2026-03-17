@@ -1,0 +1,126 @@
+@model Website_QLPT.Models.Invoice
+@{
+    Layout = "_TenantLayout";
+    ViewData["Title"] = $"Chi tiết hóa đơn T{Model.Month}/{Model.Year}";
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title">
+        <i class="bi bi-receipt-cutoff text-secondary me-2"></i>
+        Chi Tiết Hóa Đơn — Tháng @Model.Month/@Model.Year
+    </h1>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary ms-auto">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại Tổng Quan
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Thông tin phòng & hợp đồng -->
+    <div class="col-md-5">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-header">
+                <h5 class="card-qlpt-title"><i class="bi bi-house-fill text-primary me-2"></i>Thông Tin Phòng</h5>
+            </div>
+            <div class="card-qlpt-body">
+                <table class="table table-borderless mb-0" style="font-size:0.92rem;">
+                    <tr>
+                        <td class="text-muted" style="width:40%;">Phòng</td>
+                        <td class="fw-bold">@(Model.Contract?.Room?.Name ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Khu nhà</td>
+                        <td>@(Model.Contract?.Room?.Property?.Name ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Khách thuê</td>
+                        <td>@(Model.Contract?.Tenant?.FullName ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Kỳ hóa đơn</td>
+                        <td>Tháng @Model.Month / @Model.Year</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Ngày tạo</td>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Trạng thái</td>
+                        <td>
+                            @if (Model.Status == Website_QLPT.Models.InvoiceStatus.Paid)
+                            {
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Đã thu</span>
+                                <div class="text-muted small mt-1">Thu vào: @(Model.PaidAt.HasValue ? Model.PaidAt.Value.ToString("dd/MM/yyyy") : "—")</div>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Chưa thu</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chi tiết các khoản thu -->
+    <div class="col-md-7">
+        <div class="card-qlpt">
+            <div class="card-qlpt-header">
+                <h5 class="card-qlpt-title"><i class="bi bi-calculator text-success me-2"></i>Chi Tiết Các Khoản</h5>
+            </div>
+            <div class="card-qlpt-body p-0">
+                <table class="table table-hover mb-0" style="font-size:0.92rem;">
+                    <tbody>
+                        <!-- Tiền phòng -->
+                        <tr>
+                            <td><i class="bi bi-door-open me-2 text-primary"></i>Tiền phòng</td>
+                            <td class="text-end fw-bold">@Model.RoomFee.ToString("N0") <small class="text-muted">VND</small></td>
+                        </tr>
+                        <!-- Điện -->
+                        <tr>
+                            <td>
+                                <i class="bi bi-lightning-charge me-2 text-warning"></i>Tiền điện
+                                <div class="text-muted small">
+                                    Chỉ số: @Model.ElectricityOld → @Model.ElectricityNew
+                                    (@((Model.ElectricityNew - Model.ElectricityOld).ToString("N0")) kWh × @Model.ElectricityPrice.ToString("N0") đ/kWh)
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold">@Model.ElectricityFee.ToString("N0") <small class="text-muted">VND</small></td>
+                        </tr>
+                        <!-- Nước -->
+                        <tr>
+                            <td>
+                                <i class="bi bi-droplet me-2 text-info"></i>Tiền nước
+                                <div class="text-muted small">
+                                    Chỉ số: @Model.WaterOld → @Model.WaterNew
+                                    (@((Model.WaterNew - Model.WaterOld).ToString("N0")) m³ × @Model.WaterPrice.ToString("N0") đ/m³)
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold">@Model.WaterFee.ToString("N0") <small class="text-muted">VND</small></td>
+                        </tr>
+                        <!-- Phí khác -->
+                        @if (Model.OtherFee > 0)
+                        {
+                            <tr>
+                                <td>
+                                    <i class="bi bi-three-dots me-2 text-secondary"></i>Phí khác
+                                    @if (!string.IsNullOrEmpty(Model.OtherFeeNote))
+                                    {
+                                        <div class="text-muted small">@Model.OtherFeeNote</div>
+                                    }
+                                </td>
+                                <td class="text-end fw-bold">@Model.OtherFee.ToString("N0") <small class="text-muted">VND</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <td class="fw-bold fs-6"><i class="bi bi-cash-stack me-2"></i>Tổng cộng</td>
+                            <td class="text-end fw-bold fs-5 text-primary">@Model.TotalAmount.ToString("N0") <small style="font-size:0.8rem;" class="text-muted">VND</small></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

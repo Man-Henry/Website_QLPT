@@ -1,0 +1,93 @@
+@model X.PagedList.IPagedList<Website_QLPT.Models.Property>
+@using X.PagedList.Mvc.Core
+@{
+    ViewData["Title"] = "Khu Nhà / Dãy Trọ";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-house-door me-2 text-secondary"></i>Khu Nhà / Dãy Trọ</h1>
+    <a asp-action="Create" class="btn-qlpt btn-qlpt-primary">
+        <i class="bi bi-plus-lg"></i> Thêm khu nhà
+    </a>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tên khu nhà</th>
+                        <th>Địa chỉ</th>
+                        <th>Số phòng</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-muted">@item.Id</td>
+                            <td><strong>@item.Name</strong></td>
+                            <td class="text-muted">@(item.Address ?? "--")</td>
+                            <td>
+                                <span class="badge-qlpt badge-available">@item.Rooms.Count phòng</span>
+                            </td>
+                            <td class="text-muted">@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm" title="Chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Xóa khu nhà này sẽ xóa tất cả phòng bên trong. Tiếp tục?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-qlpt btn-qlpt-danger btn-qlpt-sm" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card-qlpt-footer d-flex justify-content-between align-items-center mb-0 mt-3 pt-3 border-top">
+            <div class="text-muted small">
+                Hiển thị trang @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) trên @Model.PageCount
+            </div>
+            <div>
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-house-slash fs-2 d-block mb-2"></i>
+            Chưa có khu nhà nào. <a asp-action="Create">Thêm ngay</a>
+        </div>
+    }
+</div>

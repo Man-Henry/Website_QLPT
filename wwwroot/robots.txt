@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /Home/
+Allow: /chi-tiet-phong/
+Allow: /sitemap.xml
+
+Disallow: /Dashboard/
+Disallow: /Invoices/
+Disallow: /Contracts/
+Disallow: /Reports/
+Disallow: /Rooms/
+Disallow: /Properties/
+Disallow: /Tenants/
+Disallow: /Identity/
+Disallow: /api/
+
+Sitemap: https://localhost/sitemap.xml

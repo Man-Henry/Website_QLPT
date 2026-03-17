@@ -1,0 +1,17 @@
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+appsettings.json
+appsettings.Development.json
+*.log
+.agent/
+.gemini/
+build_full.log
+LOGIC_REVIEW_REPORT.md
+node_modules/
+dist/

@@ -1,0 +1,25 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <div class="d-flex align-items-center gap-3">
+        <span style="font-size:13px;color:#6b7280;">
+            <i class="bi bi-person-circle me-1"></i>
+            @User.Identity?.Name
+        </span>
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+            <button type="submit" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                <i class="bi bi-box-arrow-right"></i> Đăng xuất
+            </button>
+        </form>
+    </div>
+}
+else
+{
+    <div class="d-flex gap-2">
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">Đăng ký</a>
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn-qlpt btn-qlpt-primary btn-qlpt-sm">Đăng nhập</a>
+    </div>
+}

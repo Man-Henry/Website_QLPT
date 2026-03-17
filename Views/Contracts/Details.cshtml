@@ -1,0 +1,178 @@
+@model Website_QLPT.Models.Contract
+@{
+    ViewData["Title"] = "Chi tiết Hợp Đồng";
+    var (badgeClass, iconClass, statusLabel) = Model.Status switch {
+        Website_QLPT.Models.ContractStatus.Active     => ("badge-available",   "bi-check-circle", "Đang hiệu lực"),
+        Website_QLPT.Models.ContractStatus.Expired    => ("badge-maintenance", "bi-clock",        "Hết hạn"),
+        _                                              => ("badge-rented",      "bi-x-circle",     "Đã thanh lý")
+    };
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-file-text me-2 text-secondary"></i>Chi tiết Hợp Đồng</h1>
+    <div class="d-flex gap-2">
+        @if (Model.Status == Website_QLPT.Models.ContractStatus.Active)
+        {
+            <form asp-action="Terminate" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Thanh lý hợp đồng này? Phòng sẽ trở về trạng thái Trống.')">
+                @Html.AntiForgeryToken()
+                <button class="btn-qlpt btn-qlpt-danger"><i class="bi bi-file-x"></i> Thanh lý HĐ</button>
+            </form>
+        }
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-secondary">
+            <i class="bi bi-pencil"></i> Sửa HĐ
+        </a>
+        <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Danh sách</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    @* Contract info *@
+    <div class="col-lg-5">
+        <div class="card-qlpt mb-3">
+            <div class="card-qlpt-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin:0;">THÔNG TIN HỢP ĐỒNG</h6>
+                    <span class="badge-qlpt @badgeClass"><i class="bi @iconClass"></i> @statusLabel</span>
+                </div>
+                <table class="w-100" style="font-size:14px;">
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;width:45%;">Phòng</td>
+                        <td>
+                            <strong>@Model.Room?.Name</strong>
+                            <div style="font-size:12px;color:#9ca3af;">@Model.Room?.Property?.Name</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Tiền phòng</td>
+                        <td style="font-weight:600;">@(Model.Room != null ? Model.Room.Price.ToString("N0") : "0") <small class="text-muted">VND/tháng</small></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Tiền cọc</td>
+                        <td style="font-weight:600;">@Model.DepositAmount.ToString("N0") <small class="text-muted">VND</small></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Ngày bắt đầu</td>
+                        <td>@Model.StartDate.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Ngày kết thúc</td>
+                        <td>@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("dd/MM/yyyy") : "Không xác định")</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Ngày tạo</td>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.Note))
+                    {
+                        <tr>
+                            <td style="color:#6b7280;padding:6px 0;vertical-align:top;">Ghi chú</td>
+                            <td style="font-style:italic;color:#6b7280;">@Model.Note</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        @* Tenant info *@
+        <div class="card-qlpt">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">THÔNG TIN KHÁCH THUÊ</h6>
+                @if (Model.Tenant != null)
+                {
+                    <table class="w-100" style="font-size:14px;">
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;width:40%;">Họ tên</td>
+                            <td><strong>@Model.Tenant.FullName</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;">CCCD</td>
+                            <td>@(Model.Tenant.NationalId ?? "--")</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;">SĐT</td>
+                            <td>@(Model.Tenant.PhoneNumber ?? "--")</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;">Email</td>
+                            <td>@(Model.Tenant.Email ?? "--")</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;vertical-align:top;">Quê quán</td>
+                            <td style="font-size:13px;color:#6b7280;">@(Model.Tenant.HomeTown ?? "--")</td>
+                        </tr>
+                    </table>
+                    <div class="mt-3">
+                        <a asp-controller="Tenants" asp-action="Edit" asp-route-id="@Model.Tenant.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                            <i class="bi bi-pencil"></i> Sửa thông tin
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Invoices list *@
+    <div class="col-lg-7">
+        <div class="card-qlpt">
+            <div class="card-qlpt-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin:0;">
+                        HÓA ĐƠN (@Model.Invoices.Count kỳ)
+                    </h6>
+                    @if (Model.Status == Website_QLPT.Models.ContractStatus.Active)
+                    {
+                        <a asp-controller="Invoices" asp-action="Create" asp-route-contractId="@Model.Id" class="btn-qlpt btn-qlpt-primary btn-qlpt-sm">
+                            <i class="bi bi-receipt"></i> Tạo hóa đơn
+                        </a>
+                    }
+                </div>
+
+                @if (Model.Invoices.Any())
+                {
+                    <table class="table-qlpt" style="font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>Kỳ</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var inv in Model.Invoices.OrderByDescending(i => i.Year).ThenByDescending(i => i.Month))
+                            {
+                                <tr>
+                                    <td>Tháng @inv.Month/@inv.Year</td>
+                                    <td><strong>@inv.TotalAmount.ToString("N0")</strong> <small class="text-muted">VND</small></td>
+                                    <td>
+                                        @if (inv.Status == Website_QLPT.Models.InvoiceStatus.Paid)
+                                        {
+                                            <span class="badge-qlpt badge-available"><i class="bi bi-check-circle"></i> Đã thu</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-qlpt badge-maintenance"><i class="bi bi-clock"></i> Chưa thu</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Invoices" asp-action="Details" asp-route-id="@inv.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="text-center py-4 text-muted" style="font-size:13px;">
+                        <i class="bi bi-receipt d-block fs-3 mb-2"></i>
+                        Chưa có hóa đơn nào.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

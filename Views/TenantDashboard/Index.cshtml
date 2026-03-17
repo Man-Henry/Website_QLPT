@@ -1,0 +1,123 @@
+@model Website_QLPT.ViewModels.TenantDashboardViewModel
+@{
+    Layout = "_TenantLayout";
+    var tenant = Model.Tenant;
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-person-lines-fill text-secondary me-2"></i>Tổng Quan Khách Thuê</h1>
+    @if (tenant != null)
+    {
+        <div class="text-muted">Xin chào, <strong>@tenant.FullName</strong>!</div>
+    }
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i> @TempData["Error"]
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @Model.Message
+    </div>
+}
+else
+{
+    <div class="row g-4 mb-4">
+        <!-- Hợp đồng của tôi -->
+        <div class="col-md-6">
+            <div class="card-qlpt h-100">
+                <div class="card-qlpt-header">
+                    <h5 class="card-qlpt-title"><i class="bi bi-file-earmark-text text-primary me-2"></i>Hợp đồng đang thuê</h5>
+                </div>
+                <div class="card-qlpt-body">
+                    @if (Model.ActiveContracts.Any())
+                    {
+                        foreach (var contract in Model.ActiveContracts)
+                        {
+                            <div class="border rounded p-3 mb-3">
+                                <h6 class="mb-2 text-primary">Phòng: @contract.Room?.Name</h6>
+                                <div class="text-muted mb-1"><i class="bi bi-building me-1"></i> Khu nhà: @contract.Room?.Property?.Name</div>
+                                <div class="mb-1"><i class="bi bi-calendar-check me-1"></i> Ngày bắt đầu: @contract.StartDate.ToString("dd/MM/yyyy")</div>
+                                <div class="mb-1">
+                                    <i class="bi bi-calendar-x me-1"></i> Ngày kết thúc: 
+                                    @(contract.EndDate.HasValue ? contract.EndDate.Value.ToString("dd/MM/yyyy") : "Vô thời hạn")
+                                </div>
+                                <div><i class="bi bi-cash-stack me-1"></i> Tiền phòng: <strong>@(contract.Room != null ? contract.Room.Price.ToString("N0") : "0") VND/tháng</strong></div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-journal-x fs-2 d-block mb-2"></i>
+                            Bạn chưa có hợp đồng thuê nào đang hoạt động.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Hóa đơn gần đây -->
+        <div class="col-md-6">
+            <div class="card-qlpt h-100">
+                <div class="card-qlpt-header">
+                    <h5 class="card-qlpt-title"><i class="bi bi-receipt text-success me-2"></i>Lịch sử Hóa đơn</h5>
+                </div>
+                <div class="card-qlpt-body p-0">
+                    @if (Model.RecentInvoices.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table-qlpt mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Kỳ</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var invoice in Model.RecentInvoices)
+                                    {
+                                        <tr>
+                                            <td>Tháng @invoice.Month/@invoice.Year</td>
+                                            <td><strong>@invoice.TotalAmount.ToString("N0") <small class="text-muted">VND</small></strong></td>
+                                            <td>
+                                                @if (invoice.Status == Website_QLPT.Models.InvoiceStatus.Paid)
+                                                {
+                                                    <span class="badge-qlpt badge-available"><i class="bi bi-check-circle"></i> Đã thu</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge-qlpt badge-maintenance"><i class="bi bi-clock"></i> Chưa thu</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a asp-controller="Invoices" asp-action="Details" asp-route-id="@invoice.Id"
+                                                   class="btn btn-sm btn-outline-primary" style="font-size:0.78rem;">
+                                                    <i class="bi bi-eye"></i> Chi tiết
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-receipt-cutoff fs-2 d-block mb-2"></i>
+                            Chưa có hóa đơn nào được tạo.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

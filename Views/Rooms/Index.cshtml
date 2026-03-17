@@ -1,0 +1,152 @@
+@model X.PagedList.IPagedList<Website_QLPT.Models.Room>
+@using X.PagedList.Mvc.Core
+@{
+    ViewData["Title"] = "Danh Sách Phòng";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-door-closed me-2 text-secondary"></i>Danh Sách Phòng</h1>
+    <a asp-action="Create" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-plus-lg"></i> Thêm phòng</a>
+</div>
+
+<!-- Filter panel -->
+<div class="card-qlpt mb-3">
+    <div class="card-qlpt-body py-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-sm-3">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Trạng thái</label>
+                <select name="statusFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Available" selected="@(ViewBag.StatusFilter == "Available")">Đang trống</option>
+                    <option value="Rented" selected="@(ViewBag.StatusFilter == "Rented")">Đã cho thuê</option>
+                    <option value="Maintenance" selected="@(ViewBag.StatusFilter == "Maintenance")">Bảo trì</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Giá từ (VND)</label>
+                <input type="number" name="minPrice" min="0" class="form-control form-control-sm" value="@ViewBag.MinPrice" placeholder="0" />
+            </div>
+            <div class="col-sm-2">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Giá đến (VND)</label>
+                <input type="number" name="maxPrice" min="0" class="form-control form-control-sm" value="@ViewBag.MaxPrice" placeholder="∞" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Khu nhà</label>
+                <select name="propertyId" class="form-select form-select-sm" asp-items="ViewBag.Properties">
+                    <option value="">-- Tất cả --</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary w-100" style="justify-content:center;">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt">
+                <thead>
+                    <tr>
+                        <th>Ảnh</th>
+                        <th>Tên phòng</th>
+                        <th>Khu nhà</th>
+                        <th>Giá thuê</th>
+                        <th>Diện tích</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var room in Model)
+                    {
+                        var thumbnail = room.Images.FirstOrDefault(i => i.IsThumbnail) ?? room.Images.FirstOrDefault();
+                        <tr>
+                            <td>
+                                @if (thumbnail != null)
+                                {
+                                    <img src="@thumbnail.ImagePath" alt="@room.Name" style="width:48px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e2e4e8;" />
+                                }
+                                else
+                                {
+                                    <div style="width:48px;height:36px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+                                        <i class="bi bi-image text-muted" style="font-size:16px;"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td><strong>@room.Name</strong></td>
+                            <td class="text-muted">@room.Property?.Name</td>
+                            <td><strong>@room.Price.ToString("N0") <small class="text-muted">VND</small></strong></td>
+                            <td class="text-muted">@(room.Area.HasValue ? $"{room.Area}m²" : "--")</td>
+                            <td>
+                                @{
+                                    var badgeClass = room.Status switch {
+                                        Website_QLPT.Models.RoomStatus.Available => "badge-available",
+                                        Website_QLPT.Models.RoomStatus.Rented => "badge-rented",
+                                        _ => "badge-maintenance"
+                                    };
+                                    var iconClass = room.Status switch {
+                                        Website_QLPT.Models.RoomStatus.Available => "bi-check-circle",
+                                        Website_QLPT.Models.RoomStatus.Rented => "bi-person",
+                                        _ => "bi-tools"
+                                    };
+                                    var statusLabel = room.Status switch {
+                                        Website_QLPT.Models.RoomStatus.Available => "Đang trống",
+                                        Website_QLPT.Models.RoomStatus.Rented => "Đã thuê",
+                                        _ => "Bảo trì"
+                                    };
+                                }
+                                <span class="badge-qlpt @badgeClass"><i class="bi @iconClass"></i> @statusLabel</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Details" asp-route-id="@room.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm"><i class="bi bi-eye"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm"><i class="bi bi-pencil"></i></a>
+                                    <form asp-action="Delete" asp-route-id="@room.Id" method="post" onsubmit="return confirm('Xóa phòng sẽ xóa tất cả hình ảnh và dữ liệu liên quan. Tiếp tục?')">
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn-qlpt btn-qlpt-danger btn-qlpt-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card-qlpt-footer d-flex justify-content-between align-items-center mb-0 mt-3 pt-3 border-top">
+            <div class="text-muted small">
+                Hiển thị trang @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) trên @Model.PageCount
+            </div>
+            <div>
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, statusFilter = ViewBag.StatusFilter, minPrice = ViewBag.MinPrice, maxPrice = ViewBag.MaxPrice, propertyId = ViewBag.PropertyId }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-door-closed fs-2 d-block mb-2"></i>
+            Không tìm thấy phòng nào. <a asp-action="Create">Thêm phòng mới</a>
+        </div>
+    }
+</div>

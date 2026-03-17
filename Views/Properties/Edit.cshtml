@@ -1,0 +1,94 @@
+@model Website_QLPT.Models.Property
+@{
+    ViewData["Title"] = "Sửa: " + Model.Name;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid #e2e4e8; margin-bottom: 5px; z-index: 1; }
+    </style>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-pencil-square me-2 text-secondary"></i>Sửa: @Model.Name</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+</div>
+
+<div class="card-qlpt" style="max-width:600px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Edit" method="post" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Address"></label>
+                <input asp-for="Address" class="form-control" />
+            </div>
+            <div class="mb-4">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="form-label mb-2 fw-bold" style="font-size:14px;">Vị trí trên bản đồ</label>
+                <div id="map"></div>
+                <input type="hidden" asp-for="Latitude" id="Lat" />
+                <input type="hidden" asp-for="Longitude" id="Lng" />
+                <small class="text-muted"><i class="bi bi-geo-alt"></i> Click vào bản đồ để cập nhật tọa độ mới cho Khu nhà.</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-check-lg"></i> Lưu thay đổi</button>
+                <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var defaultLat = @(Model.Latitude ?? 10.762622); // Default HCM City
+            var defaultLng = @(Model.Longitude ?? 106.660172);
+
+            var map = L.map('map').setView([defaultLat, defaultLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            var marker;
+            @if(Model.Latitude.HasValue && Model.Longitude.HasValue) {
+                <text>
+                marker = L.marker([defaultLat, defaultLng]).addTo(map);
+                </text>
+            }
+
+            // Fix blank map issue
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 300);
+
+            map.on('click', function(e) {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                
+                document.getElementById('Lat').value = lat;
+                document.getElementById('Lng').value = lng;
+
+                if (marker) {
+                    marker.setLatLng(e.latlng);
+                } else {
+                    marker = L.marker(e.latlng).addTo(map);
+                }
+            });
+        });
+    </script>
+}

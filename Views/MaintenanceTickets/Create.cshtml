@@ -1,0 +1,60 @@
+@model Website_QLPT.Models.MaintenanceTicket
+@{
+    Layout = "_TenantLayout";
+    ViewData["Title"] = "Thêm Sự Cố Báo Cáo";
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-tools text-secondary me-2"></i>Báo Cáo Sự Cố Mới</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card-qlpt max-w-2xl mx-auto">
+    <div class="card-qlpt-body p-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="ContractId" class="form-label fw-bold">Chọn Phòng đang thuê <span class="text-danger">*</span></label>
+                <select asp-for="ContractId" class="form-select" asp-items="ViewBag.ContractId"></select>
+                <span asp-validation-for="ContractId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-bold">Tiêu đề <span class="text-danger">*</span></label>
+                <input asp-for="Title" class="form-control" placeholder="VD: Hỏng vòi nước nhà vệ sinh..." />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold">Mô tả chi tiết <span class="text-danger">*</span></label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mô tả rõ tình trạng sự cố đang xảy ra..."></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Priority" class="form-label fw-bold">Mức độ ưu tiên</label>
+                <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<Website_QLPT.Models.TicketPriority>()"></select>
+                <span asp-validation-for="Priority" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Đính kèm Hình ảnh minh họa (không bắt buộc)</label>
+                <input type="file" name="imageFile" class="form-control" accept="image/*" />
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary py-2 text-uppercase fw-bold">
+                    <i class="bi bi-send me-1"></i> Gửi Yêu Cầu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

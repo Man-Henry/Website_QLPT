@@ -1,0 +1,102 @@
+@model IEnumerable<Website_QLPT.Models.MaintenanceTicket>
+@{
+    Layout = "_TenantLayout";
+    ViewData["Title"] = "Phiếu bảo trì của tôi";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-clipboard2-check text-secondary me-2"></i>Phiếu Bảo Trì Của Tôi</h1>
+    <a asp-controller="MaintenanceTickets" asp-action="Create" class="btn-qlpt btn-qlpt-primary">
+        <i class="bi bi-plus-lg"></i> Gửi phiếu mới
+    </a>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt">
+                <thead>
+                    <tr>
+                        <th>Phòng</th>
+                        <th>Tiêu đề</th>
+                        <th>Ưu tiên</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày gửi</th>
+                        <th>Ảnh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ticket in Model)
+                    {
+                        var priorityBadge = ticket.Priority switch {
+                            Website_QLPT.Models.TicketPriority.Low    => ("badge-available",   "Thấp"),
+                            Website_QLPT.Models.TicketPriority.Medium => ("badge-maintenance", "Bình thường"),
+                            Website_QLPT.Models.TicketPriority.High   => ("badge-rented",      "Cao"),
+                            _                                          => ("badge-rented",      "Khẩn cấp")
+                        };
+                        var statusBadge = ticket.Status switch {
+                            Website_QLPT.Models.TicketStatus.Open       => ("badge-maintenance", "bi-hourglass-split", "Đã tiếp nhận"),
+                            Website_QLPT.Models.TicketStatus.InProgress => ("badge-rented",      "bi-gear-fill",       "Đang xử lý"),
+                            Website_QLPT.Models.TicketStatus.Resolved   => ("badge-available",   "bi-check-circle",    "Hoàn thành"),
+                            _                                            => ("",                  "bi-x-circle",        "Đã hủy")
+                        };
+                        <tr>
+                            <td>
+                                <div><strong>@ticket.Contract?.Room?.Name</strong></div>
+                                <div style="font-size:12px;color:#9ca3af;">@ticket.Contract?.Room?.Property?.Name</div>
+                            </td>
+                            <td>
+                                <div style="font-weight:600;">@ticket.Title</div>
+                                <div style="font-size:12px;color:#9ca3af;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    @ticket.Description
+                                </div>
+                            </td>
+                            <td><span class="badge-qlpt @priorityBadge.Item1">@priorityBadge.Item2</span></td>
+                            <td>
+                                <span class="badge-qlpt @statusBadge.Item1">
+                                    <i class="bi @statusBadge.Item2"></i> @statusBadge.Item3
+                                </span>
+                            </td>
+                            <td class="text-muted" style="font-size:13px;">@ticket.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(ticket.ImagePath))
+                                {
+                                    <a href="@ticket.ImagePath" target="_blank">
+                                        <img src="@ticket.ImagePath" alt="Ảnh" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size:12px;">--</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-clipboard2-x fs-2 d-block mb-2"></i>
+            Bạn chưa gửi phiếu bảo trì nào.
+            <div class="mt-3">
+                <a asp-controller="MaintenanceTickets" asp-action="Create" class="btn-qlpt btn-qlpt-primary">
+                    <i class="bi bi-plus-lg"></i> Gửi phiếu đầu tiên
+                </a>
+            </div>
+        </div>
+    }
+</div>

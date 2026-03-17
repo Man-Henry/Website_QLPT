@@ -1,0 +1,98 @@
+@model Website_QLPT.Models.Contract
+@{
+    ViewData["Title"] = "Sửa Hợp Đồng";
+    var statusList = new SelectList(Enum.GetValues(typeof(Website_QLPT.Models.ContractStatus))
+        .Cast<Website_QLPT.Models.ContractStatus>()
+        .Select(s => new { Value = (int)s, Text = s.GetType().GetField(s.ToString())!
+            .GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+            .Cast<System.ComponentModel.DataAnnotations.DisplayAttribute>()
+            .FirstOrDefault()?.Name ?? s.ToString() }),
+        "Value", "Text", (int)Model.Status);
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-pencil-square me-2 text-secondary"></i>Sửa Hợp Đồng</h1>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card-qlpt" style="max-width:700px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Edit" method="post" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RoomId" />
+            <input type="hidden" asp-for="TenantId" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @* Thông tin phòng & khách — chỉ đọc *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:13px;font-weight:600;">Phòng</label>
+                    <input type="text" class="form-control" readonly
+                           value="@(Model.Room?.Property?.Name) - @Model.Room?.Name" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:13px;font-weight:600;">Khách thuê</label>
+                    <input type="text" class="form-control" readonly value="@Model.Tenant?.FullName" />
+                </div>
+            </div>
+
+            @* Ngày thuê *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="StartDate"></label>
+                    <input asp-for="StartDate" class="form-control" type="date" />
+                    <span asp-validation-for="StartDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EndDate"></label>
+                    <input asp-for="EndDate" class="form-control" type="date" />
+                    <small class="text-muted">Để trống nếu không xác định hạn.</small>
+                </div>
+            </div>
+
+            @* Tiền cọc *@
+            <div class="mb-3">
+                <label asp-for="DepositAmount"></label>
+                <div class="input-group">
+                    <input asp-for="DepositAmount" class="form-control" placeholder="VD: 3000000" />
+                    <span class="input-group-text" style="font-size:13px;color:#6b7280;background:#f9fafb;border-color:#e2e4e8;">VND</span>
+                </div>
+                <span asp-validation-for="DepositAmount" class="text-danger small"></span>
+            </div>
+
+            @* Trạng thái *@
+            <div class="mb-3">
+                <label asp-for="Status"></label>
+                <select asp-for="Status" class="form-select" asp-items="statusList"></select>
+                @if (Model.Status == Website_QLPT.Models.ContractStatus.Active)
+                {
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Nếu chuyển sang "Đã thanh lý" hoặc "Đã hết hạn", phòng sẽ tự động về trạng thái <strong>Trống</strong>.
+                    </small>
+                }
+            </div>
+
+            @* Ghi chú *@
+            <div class="mb-4">
+                <label asp-for="Note"></label>
+                <textarea asp-for="Note" class="form-control" rows="2" placeholder="Các điều khoản đặc biệt, thỏa thuận thêm..."></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary">
+                    <i class="bi bi-check-lg"></i> Lưu thay đổi
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -1,0 +1,137 @@
+@model Website_QLPT.Models.Room
+@{
+    ViewData["Title"] = "Sửa: " + Model.Name;
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-pencil-square me-2 text-secondary"></i>@ViewData["Title"]</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+</div>
+
+<div class="card-qlpt" style="max-width:760px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Name"></label>
+                    <input asp-for="Name" class="form-control" placeholder="VD: Phòng 101" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PropertyId">Khu nhà</label>
+                    <select asp-for="PropertyId" class="form-select" asp-items="ViewBag.PropertyId">
+                        <option value="">-- Chọn khu nhà --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Price"></label>
+                    <input asp-for="Price" type="number" min="0" class="form-control" placeholder="VD: 2500000" />
+                    <span asp-validation-for="Price" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Area"></label>
+                    <input asp-for="Area" class="form-control" placeholder="m²" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Status"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="0">Đang trống</option>
+                        <option value="1">Đã thuê</option>
+                        <option value="2">Bảo trì</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Note"></label>
+                <textarea asp-for="Note" class="form-control" rows="2" placeholder="Ghi chú thêm..."></textarea>
+            </div>
+
+            @* Existing images *@
+            @if (Model.Images.Any())
+            {
+                <div class="mb-3">
+                    <label class="d-block mb-2" style="font-size:13px;font-weight:600;">Ảnh hiện tại</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var img in Model.Images)
+                        {
+                            <div style="position:relative;">
+                                <img src="@img.ImagePath" alt="" style="width:100px;height:75px;object-fit:cover;border-radius:8px;border:1px solid #e2e4e8;" />
+                                @if (img.IsThumbnail)
+                                {
+                                    <span style="position:absolute;top:4px;left:4px;background:#22c55e;color:#fff;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:600;">Đại diện</span>
+                                }
+                                <div style="position:absolute;top:4px;right:4px;">
+                                    <input type="checkbox" name="deleteImageIds" value="@img.Id"
+                                           id="del_@img.Id" style="display:none;" />
+                                    <label for="del_@img.Id" class="del-img-btn" title="Xóa ảnh này"
+                                           style="cursor:pointer;background:rgba(239,68,68,0.85);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">
+                                        <i class="bi bi-x"></i>
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <small class="text-muted">Tích vào ✗ trên ảnh để xóa ảnh đó khi lưu.</small>
+                </div>
+            }
+
+            @* Upload new images *@
+            <div class="mb-4">
+                <label class="d-block mb-1" style="font-size:13px;font-weight:500;">Thêm ảnh mới</label>
+                <input type="file" name="newImages" class="form-control" multiple accept="image/*" id="newImgInput" />
+                <div id="newImgPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                <small class="text-muted">Chấp nhận JPG, PNG, WEBP. Chọn nhiều ảnh cùng lúc.</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-check-lg"></i> Lưu thay đổi</button>
+                <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.del-img-btn').forEach(label => {
+    label.addEventListener('click', function() {
+        const checkboxId = this.getAttribute('for');
+        const checkbox = document.getElementById(checkboxId);
+        const imgWrapper = this.closest('div[style*="position:relative"]');
+        if (checkbox.checked) {
+            checkbox.checked = false;
+            imgWrapper.style.opacity = '1';
+            this.style.background = 'rgba(239,68,68,0.85)';
+        } else {
+            checkbox.checked = true;
+            imgWrapper.style.opacity = '0.4';
+            this.style.background = '#6b7280';
+        }
+    });
+});
+
+document.getElementById('newImgInput').addEventListener('change', function () {
+    const preview = document.getElementById('newImgPreview');
+    preview.innerHTML = '';
+    Array.from(this.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = 'width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #e2e4e8;';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+}

@@ -1,0 +1,82 @@
+@model Website_QLPT.Models.Tenant
+@{
+    ViewData["Title"] = "Sửa: " + Model.FullName;
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-person-gear me-2 text-secondary"></i>Cập nhật Khách Thuê</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+</div>
+
+<div class="card-qlpt" style="max-width:700px;">
+    <div class="card-qlpt-body">
+        <form asp-action="Edit" method="post" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatedAt" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label asp-for="FullName"></label>
+                    <input asp-for="FullName" class="form-control" placeholder="VD: Nguyễn Văn A" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DateOfBirth"></label>
+                    <input asp-for="DateOfBirth" class="form-control" type="date" />
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="NationalId"></label>
+                    <input asp-for="NationalId" class="form-control" placeholder="VD: 038xxxxxx" />
+                    <span asp-validation-for="NationalId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PhoneNumber"></label>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="VD: 0901234567" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" type="email" placeholder="VD: nguyenvana@gmail.com" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+                <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Khách thuê có thể đăng nhập xem hóa đơn/bảo trì nếu họ tạo tài khoản với Email này.</small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="IdentityUserId" class="form-label">Tài khoản người thuê</label>
+                <select asp-for="IdentityUserId" class="form-select" asp-items="ViewBag.IdentityUserId">
+                    <option value="">-- Chưa liên kết tài khoản --</option>
+                </select>
+                <span asp-validation-for="IdentityUserId" class="text-danger small"></span>
+                @if (Model.IdentityUser != null)
+                {
+                    <small class="text-success mt-1 d-block">
+                        <i class="bi bi-check-circle me-1"></i>Đang liên kết với @Model.IdentityUser.Email
+                    </small>
+                }
+                else
+                {
+                    <small class="text-muted mt-1 d-block">
+                        <i class="bi bi-clock-history me-1"></i>Chưa liên kết tài khoản đăng nhập.
+                    </small>
+                }
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="HomeTown"></label>
+                <textarea asp-for="HomeTown" class="form-control" rows="2" placeholder="Địa chỉ thường trú hoặc quê quán..."></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-check-lg"></i> Lưu thay đổi</button>
+                <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

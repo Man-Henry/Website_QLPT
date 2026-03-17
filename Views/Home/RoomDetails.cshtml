@@ -1,0 +1,239 @@
+@model Website_QLPT.Models.Room
+@{
+    Layout = "_PublicLayout";
+    var room = Model;
+    var price = room.Price.ToString("N0");
+    var area = room.Area?.ToString("N0") ?? "N/A";
+    var firstImage = room.Images?.FirstOrDefault(i => i.IsThumbnail)?.ImagePath
+                  ?? room.Images?.FirstOrDefault()?.ImagePath;
+    var ogImageUrl = firstImage != null
+        ? $"{Context.Request.Scheme}://{Context.Request.Host}{firstImage}"
+        : $"{Context.Request.Scheme}://{Context.Request.Host}/images/og-default.jpg";
+    var pageUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/chi-tiet-phong/{room.Id}";
+
+    ViewData["Title"] = room.Name;
+    ViewData["MetaDescription"] = $"Phòng {room.Name} tại {room.Property?.Name} — Diện tích {area} m², giá {price} VND/tháng. {"Xem chi tiết và liên hệ ngay!"}";
+    ViewData["OgTitle"] = $"{room.Name} | {room.Property?.Name} — QLPT Phòng Trọ";
+    ViewData["OgType"] = "product";
+    ViewData["OgImage"] = ogImageUrl;
+}
+
+@section Styles {
+    <!-- Leaflet CSS (only on this page) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        #routingMap { height: 400px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6; z-index: 1; }
+        .room-img-main { height: 400px; width: 100%; object-fit: cover; border-radius: 8px; }
+        .room-img-thumb { height: 80px; width: 100%; object-fit: cover; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .room-img-thumb:hover { filter: brightness(0.8); }
+    </style>
+}
+
+<div class="container my-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Room Details & Images -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    @{
+                        var images = Model.Images.ToList();
+                        var mainImage = images.FirstOrDefault(i => i.IsThumbnail)?.ImagePath ?? images.FirstOrDefault()?.ImagePath ?? "https://placehold.co/800x600?text=No+Image";
+                    }
+                    <img src="@mainImage" id="mainRoomImg" class="room-img-main mb-3"
+                         alt="Phòng @room.Name tại @(room.Property?.Name)"
+                         width="800" height="400"
+                         fetchpriority="high">
+
+                    @if (images.Count > 1)
+                    {
+                        <div class="row g-2">
+                            @foreach (var img in images)
+                            {
+                                <div class="col-3 col-md-2">
+                                    <img src="@img.ImagePath"
+                                         class="room-img-thumb"
+                                         alt="Ảnh phòng @room.Name"
+                                         loading="lazy"
+                                         width="120" height="80"
+                                         onclick="document.getElementById('mainRoomImg').src=this.src;">
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <h1 class="h2 fw-bold mt-4 mb-3">@Model.Name</h1>
+                    <div class="d-flex flex-wrap gap-3 mb-4 text-muted">
+                        <div><i class="bi bi-geo-alt-fill text-danger"></i> @(Model.Property?.Name ?? "") - @(Model.Property?.Address ?? "")</div>
+                        <div><i class="bi bi-rulers text-secondary"></i> @Model.Area m²</div>
+                        <div class="fw-bold text-primary"><i class="bi bi-tag-fill"></i> @Model.Price.ToString("N0") VND / tháng</div>
+                    </div>
+
+                    <h5 class="fw-bold border-bottom pb-2">Mô tả thêm</h5>
+                    <p class="mb-0" style="white-space: pre-line;">@(Model.Note ?? "Không có mô tả.")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Config & Map Layout -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 sticky-lg-top" style="top: 100px; z-index: 10;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-map-fill text-success me-2"></i>Bản đồ & Chỉ đường</h5>
+                    @if (Model.Property?.Latitude != null && Model.Property?.Longitude != null)
+                    {
+                        <p class="text-muted small mb-2">Bản đồ đang hiển thị vị trí khu nhà. Vui lòng cho phép quyền truy cập vị trí để vẽ đường đi từ chỗ bạn đến đây.</p>
+                        <div id="routingMap" class="mb-3"></div>
+                        <div id="propertyPopupData"
+                             data-title="@(Model.Property?.Name ?? "Khu nhà")"
+                             data-address="@(Model.Property?.Address ?? string.Empty)"
+                             hidden></div>
+                        <button id="btnFindRoute" class="btn btn-primary w-100"><i class="bi bi-sign-turn-right-fill me-2"></i>Tìm đường đến đây</button>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Chủ nhà chưa thiết lập tọa độ bản đồ cho khu nhà này.
+                        </div>
+                    }
+
+                    <hr class="my-4">
+                    <h5 class="fw-bold mb-2">Thông Tin Khu Nhà</h5>
+                    <p class="mb-1">
+                        <i class="bi bi-building text-primary me-2"></i>
+                        <strong>@(Model.Property?.Name ?? "Khu nhà")</strong>
+                    </p>
+                    @if (!string.IsNullOrEmpty(Model.Property?.Address))
+                    {
+                        <p class="mb-1 text-muted" style="font-size:0.9rem;">
+                            <i class="bi bi-geo-alt-fill text-danger me-2"></i>@Model.Property.Address
+                        </p>
+                    }
+                    <div class="mt-3 d-grid gap-2">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách phòng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Leaflet JS (only when map is needed) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js" defer></script>
+
+    @if (Model.Property?.Latitude != null && Model.Property?.Longitude != null)
+    {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var destLat = @Model.Property.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var destLng = @Model.Property.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            var map = L.map('routingMap').setView([destLat, destLng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            var popupSource = document.getElementById('propertyPopupData');
+            var popupContent = document.createElement('div');
+            var popupTitle = document.createElement('b');
+            popupTitle.textContent = popupSource?.dataset.title || 'Khu nhà';
+            popupContent.appendChild(popupTitle);
+            var popupAddress = popupSource?.dataset.address;
+            if (popupAddress) {
+                popupContent.appendChild(document.createElement('br'));
+                popupContent.appendChild(document.createTextNode(popupAddress));
+            }
+
+            var destMarker = L.marker([destLat, destLng]).addTo(map).bindPopup(popupContent).openPopup();
+            var routingControl = null;
+
+            document.getElementById('btnFindRoute').addEventListener('click', function() {
+                var btn = this;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang định vị...';
+                btn.disabled = true;
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            var userLat = position.coords.latitude;
+                            var userLng = position.coords.longitude;
+                            if (routingControl) { map.removeControl(routingControl); }
+                            routingControl = L.Routing.control({
+                                waypoints: [L.latLng(userLat, userLng), L.latLng(destLat, destLng)],
+                                routeWhileDragging: false, addWaypoints: false,
+                                createMarker: function() { return null; },
+                                lineOptions: { styles: [{color: '#0d6efd', opacity: 0.8, weight: 5}] },
+                                show: false
+                            }).addTo(map);
+                            L.marker([userLat, userLng]).addTo(map).bindPopup('<b>Vị trí của bạn</b>').openPopup();
+                            btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Đã tìm thấy đường đi';
+                            btn.classList.replace('btn-primary', 'btn-success');
+                        },
+                        function() {
+                            alert('Không thể lấy vị trí của bạn.');
+                            btn.innerHTML = '<i class="bi bi-sign-turn-right-fill me-2"></i>Thử lại';
+                            btn.disabled = false;
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    );
+                } else {
+                    alert('Trình duyệt không hỗ trợ định vị.');
+                    btn.innerHTML = '<i class="bi bi-sign-turn-right-fill me-2"></i>Tìm đường đến đây';
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+    }
+
+    <!-- JSON-LD: RealEstateListing -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "RealEstateListing",
+      "name": "@Html.Raw(room.Name.Replace("\"", "&quot;"))",
+      "description": "Phòng trọ @Html.Raw(room.Name.Replace("\"", "&quot;")) tại @Html.Raw((room.Property?.Name ?? "").Replace("\"", "&quot;"))",
+      "url": "@pageUrl",
+      "image": "@ogImageUrl",
+      "price": "@room.Price",
+      "priceCurrency": "VND",
+      "address": {
+        "@@type": "PostalAddress",
+        "streetAddress": "@Html.Raw((room.Property?.Address ?? "").Replace("\"", "&quot;"))",
+        "addressLocality": "TP. Hồ Chí Minh",
+        "addressCountry": "VN"
+      },
+      "floorSize": {
+        "@@type": "QuantitativeValue",
+        "value": @(room.Area ?? 0),
+        "unitCode": "MTK"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@@type": "ListItem", "position": 1, "name": "Trang chủ", "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/")" },
+        { "@@type": "ListItem", "position": 2, "name": "Tìm Phòng", "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}/Home/AllRooms")" },
+        { "@@type": "ListItem", "position": 3, "name": "@Html.Raw(room.Name.Replace("\"", "&quot;"))", "item": "@pageUrl" }
+      ]
+    }
+    </script>
+}
+
+
+}

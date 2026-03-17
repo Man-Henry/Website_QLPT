@@ -1,0 +1,163 @@
+@model Website_QLPT.Models.Room
+@{
+    ViewData["Title"] = Model.Name;
+    var thumbnail = Model.Images.FirstOrDefault(i => i.IsThumbnail) ?? Model.Images.FirstOrDefault();
+    var activeContract = Model.Contracts.FirstOrDefault();
+    var statusBadge = Model.Status switch {
+        Website_QLPT.Models.RoomStatus.Available => ("badge-available", "bi-check-circle", "Đang trống"),
+        Website_QLPT.Models.RoomStatus.Rented => ("badge-rented", "bi-person", "Đã cho thuê"),
+        _ => ("badge-maintenance", "bi-tools", "Bảo trì")
+    };
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-door-closed me-2 text-secondary"></i>@Model.Name</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-pencil"></i> Chỉnh sửa</a>
+        <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Danh sách phòng</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    @* Room Info Card *@
+    <div class="col-lg-5">
+        <div class="card-qlpt mb-3">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">THÔNG TIN PHÒNG</h6>
+                <div class="mb-3" style="text-align:center;">
+                    @if (thumbnail != null)
+                    {
+                        <img src="@thumbnail.ImagePath" alt="@Model.Name"
+                             style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;border:1px solid #e2e4e8;" />
+                    }
+                    else
+                    {
+                        <div style="width:100%;height:160px;background:#f3f4f6;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-image text-muted" style="font-size:40px;"></i>
+                        </div>
+                    }
+                </div>
+                <table class="w-100" style="font-size:14px;">
+                    <tr>
+                        <td style="color:#6b7280;padding:5px 0;width:40%;">Khu nhà</td>
+                        <td style="font-weight:500;">@Model.Property?.Name</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:5px 0;">Giá thuê</td>
+                        <td style="font-weight:600;color:#111;">@Model.Price.ToString("N0") <small style="color:#9ca3af;">VND/tháng</small></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:5px 0;">Diện tích</td>
+                        <td>@(Model.Area.HasValue ? $"{Model.Area} m²" : "--")</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:5px 0;">Trạng thái</td>
+                        <td><span class="badge-qlpt @statusBadge.Item1"><i class="bi @statusBadge.Item2"></i> @statusBadge.Item3</span></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:5px 0;">Ngày tạo</td>
+                        <td>@Model.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.Note))
+                    {
+                        <tr>
+                            <td style="color:#6b7280;padding:5px 0;vertical-align:top;">Ghi chú</td>
+                            <td style="color:#6b7280;font-style:italic;">@Model.Note</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        @* Active Contract *@
+        <div class="card-qlpt">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">HỢP ĐỒNG HIỆN TẠI</h6>
+                @if (activeContract != null)
+                {
+                    <div style="font-size:14px;">
+                        <div class="mb-2"><i class="bi bi-person-fill me-2 text-secondary"></i><strong>@activeContract.Tenant?.FullName</strong></div>
+                        <div class="mb-1 text-muted"><i class="bi bi-phone me-2"></i>@(activeContract.Tenant?.PhoneNumber ?? "--")</div>
+                        <div class="mb-1 text-muted"><i class="bi bi-calendar3 me-2"></i>@activeContract.StartDate.ToString("dd/MM/yyyy") —
+                            @(activeContract.EndDate.HasValue ? activeContract.EndDate.Value.ToString("dd/MM/yyyy") : "Không xác định")
+                        </div>
+                        <div class="mb-3 text-muted"><i class="bi bi-cash me-2"></i>Cọc: <strong>@activeContract.DepositAmount.ToString("N0") VND</strong></div>
+                        <a asp-controller="Contracts" asp-action="Details" asp-route-id="@activeContract.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                            <i class="bi bi-file-text"></i> Xem hợp đồng
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-3 text-muted" style="font-size:13px;">
+                        <i class="bi bi-file-x d-block fs-3 mb-2"></i>
+                        Chưa có hợp đồng hiệu lực.
+                        <div class="mt-2">
+                            <a asp-controller="Contracts" asp-action="Create" class="btn-qlpt btn-qlpt-primary btn-qlpt-sm">
+                                <i class="bi bi-plus"></i> Tạo hợp đồng
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Image Gallery *@
+    <div class="col-lg-7">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">
+                    GALLERY ẢNH (@Model.Images.Count ảnh)
+                </h6>
+                @if (Model.Images.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var img in Model.Images)
+                        {
+                            <div style="position:relative;">
+                                <img src="@img.ImagePath" alt="@Model.Name"
+                                     style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:2px solid @(img.IsThumbnail ? "#22c55e" : "#e2e4e8");cursor:pointer;"
+                                     onclick="openLightbox('@img.ImagePath')" />
+                                @if (img.IsThumbnail)
+                                {
+                                    <span style="position:absolute;bottom:4px;left:4px;background:#22c55e;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;">ĐẠI DIỆN</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-images fs-2 d-block mb-2"></i>
+                        Chưa có ảnh nào.
+                        <div class="mt-2">
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                                <i class="bi bi-upload"></i> Upload ảnh
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Lightbox *@
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" style="max-width:90vw;max-height:90vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.5);" />
+</div>
+
+@section Scripts {
+<script>
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+}

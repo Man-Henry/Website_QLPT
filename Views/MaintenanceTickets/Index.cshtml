@@ -1,0 +1,143 @@
+@model X.PagedList.IPagedList<Website_QLPT.Models.MaintenanceTicket>
+@using X.PagedList.Mvc.Core
+@{
+    Layout = ViewData["Layout"]?.ToString() ?? "_Layout";
+    ViewData["Title"] = "Báo Cáo Sự Cố";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">
+        @TempData["Error"]
+    </div>
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-tools text-secondary me-2"></i>Danh Sách Sự Cố</h1>
+    @if (!isAdmin)
+    {
+        <a asp-action="Create" class="btn-qlpt btn-qlpt-primary">
+            <i class="bi bi-plus-lg"></i> Thêm báo cáo
+        </a>
+    }
+</div>
+
+<div class="card-qlpt mb-3">
+    <div class="card-qlpt-body py-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-sm-3">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Trạng thái</label>
+                <select name="statusFilter" class="form-select form-select-sm">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Open" selected="@(ViewBag.StatusFilter == "Open")">Đã tiếp nhận</option>
+                    <option value="InProgress" selected="@(ViewBag.StatusFilter == "InProgress")">Đang xử lý</option>
+                    <option value="Resolved" selected="@(ViewBag.StatusFilter == "Resolved")">Hoàn thành</option>
+                    <option value="Closed" selected="@(ViewBag.StatusFilter == "Closed")">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary w-100" style="justify-content:center;">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tiêu đề</th>
+                        <th>Phòng</th>
+                        @if (isAdmin)
+                        {
+                            <th>Người thuê</th>
+                        }
+                        <th>Mức độ</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày gửi</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-muted">@item.Id</td>
+                            <td><strong>@item.Title</strong></td>
+                            <td>@item.Contract?.Room?.Name</td>
+                            @if (isAdmin)
+                            {
+                                <td>@item.Contract?.Tenant?.FullName</td>
+                            }
+                            <td>
+                                @{
+                                    var priorityClass = item.Priority switch {
+                                        Website_QLPT.Models.TicketPriority.High => "text-danger fw-bold",
+                                        Website_QLPT.Models.TicketPriority.Urgent => "text-danger fw-bold fs-5",
+                                        Website_QLPT.Models.TicketPriority.Medium => "text-warning",
+                                        _ => "text-secondary"
+                                    };
+                                }
+                                <span class="@priorityClass">@item.Priority.ToString()</span>
+                            </td>
+                            <td>
+                                @{
+                                    var badgeClass = item.Status switch {
+                                        Website_QLPT.Models.TicketStatus.Open => "badge-available",
+                                        Website_QLPT.Models.TicketStatus.InProgress => "badge bg-warning text-dark",
+                                        Website_QLPT.Models.TicketStatus.Resolved => "badge bg-success",
+                                        _ => "badge bg-secondary"
+                                    };
+                                }
+                                <span class="@badgeClass">@item.Status.ToString()</span>
+                            </td>
+                            <td class="text-muted">@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm" title="Chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card-qlpt-footer d-flex justify-content-between align-items-center mb-0 mt-3 pt-3 border-top">
+            <div class="text-muted small">
+                Hiển thị trang @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) trên @Model.PageCount
+            </div>
+            <div>
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, statusFilter = ViewBag.StatusFilter }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            Chưa có báo cáo sự cố nào.
+        </div>
+    }
+</div>

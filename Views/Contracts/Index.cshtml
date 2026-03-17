@@ -1,0 +1,138 @@
+@model X.PagedList.IPagedList<Website_QLPT.Models.Contract>
+@using X.PagedList.Mvc.Core
+@{
+    ViewData["Title"] = "Hợp Đồng";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-success">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    </div>
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-file-text me-2 text-secondary"></i>Quản Lý Hợp Đồng</h1>
+    <a asp-action="Create" class="btn-qlpt btn-qlpt-primary"><i class="bi bi-plus-lg"></i> Tạo hợp đồng</a>
+</div>
+
+@* Search *@
+<div class="card-qlpt mb-3">
+    <div class="card-qlpt-body py-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-sm-6">
+                <label class="form-label" style="font-size:12px;font-weight:600;color:#6b7280;">Tìm kiếm</label>
+                <input type="text" name="search" value="@ViewBag.Search" class="form-control form-control-sm"
+                       placeholder="Nhập tên phòng hoặc tên khách thuê..." />
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary w-100" style="justify-content:center;">
+                    <i class="bi bi-search"></i> Tìm
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+            {
+                <div class="col-sm-2">
+                    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary w-100" style="justify-content:center;">
+                        <i class="bi bi-x-circle"></i> Xóa lọc
+                    </a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card-qlpt">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table-qlpt">
+                <thead>
+                    <tr>
+                        <th>Phòng / Khu nhà</th>
+                        <th>Khách thuê</th>
+                        <th>Ngày bắt đầu</th>
+                        <th>Ngày kết thúc</th>
+                        <th>Tiền cọc</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contract in Model)
+                    {
+                        var (badgeClass, iconClass, label) = contract.Status switch {
+                            Website_QLPT.Models.ContractStatus.Active     => ("badge-available",    "bi-check-circle", "Đang hiệu lực"),
+                            Website_QLPT.Models.ContractStatus.Expired    => ("badge-maintenance",  "bi-clock",        "Hết hạn"),
+                            _                                              => ("badge-rented",       "bi-x-circle",     "Đã thanh lý")
+                        };
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>@contract.Room?.Name</strong>
+                                    <div style="font-size:12px;color:#9ca3af;">@contract.Room?.Property?.Name</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>@contract.Tenant?.FullName</strong>
+                                    <div style="font-size:12px;color:#9ca3af;">@contract.Tenant?.PhoneNumber</div>
+                                </div>
+                            </td>
+                            <td class="text-muted">@contract.StartDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted">@(contract.EndDate.HasValue ? contract.EndDate.Value.ToString("dd/MM/yyyy") : "--")</td>
+                            <td><strong>@contract.DepositAmount.ToString("N0")</strong> <small class="text-muted">VND</small></td>
+                            <td><span class="badge-qlpt @badgeClass"><i class="bi @iconClass"></i> @label</span></td>
+                            <td>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a asp-action="Details" asp-route-id="@contract.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@contract.Id" class="btn-qlpt btn-qlpt-secondary btn-qlpt-sm" title="Sửa hợp đồng">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    @if (contract.Status == Website_QLPT.Models.ContractStatus.Active)
+                                    {
+                                        <form asp-action="Terminate" asp-route-id="@contract.Id" method="post"
+                                              onsubmit="return confirm('Thanh lý hợp đồng phòng @(contract.Room?.Name) - @(contract.Tenant?.FullName)?\nPhòng sẽ trở về trạng thái Trống.')">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn-qlpt btn-qlpt-danger btn-qlpt-sm" title="Thanh lý hợp đồng">
+                                                <i class="bi bi-file-x"></i> Thanh lý
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.PageCount > 1)
+        {
+            <div class="card-qlpt-body border-top py-3 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    Hiển thị @Model.FirstItemOnPage đến @Model.LastItemOnPage trong tổng số @Model.TotalItemCount hợp đồng
+                </div>
+                <div>
+                    @Html.PagedListPager(Model, page => Url.Action("Index", new { page, search = ViewBag.Search }),
+                    new PagedListRenderOptions {
+                        LiElementClasses = new string[] { "page-item" },
+                        PageClasses = new string[] { "page-link" },
+                        UlElementClasses = new string[] { "pagination", "pagination-sm", "mb-0" }
+                    })
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card-qlpt-body text-center py-5 text-muted">
+            <i class="bi bi-file-earmark-x fs-2 d-block mb-2"></i>
+            Chưa có hợp đồng nào. <a asp-action="Create">Tạo hợp đồng đầu tiên</a>
+        </div>
+    }
+</div>

@@ -1,0 +1,82 @@
+@model Website_QLPT.Models.MaintenanceTicket
+@{
+    Layout = "_TenantLayout";
+    ViewData["Title"] = "Gửi phiếu bảo trì";
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger"><i class="bi bi-x-circle-fill me-2"></i>@TempData["Error"]</div>
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-tools text-secondary me-2"></i>Gửi Phiếu Bảo Trì</h1>
+    <a asp-controller="MaintenanceTickets" asp-action="Index" class="btn-qlpt btn-qlpt-secondary">
+        <i class="bi bi-arrow-left"></i> Danh sách phiếu
+    </a>
+</div>
+
+<div class="card-qlpt" style="max-width:680px;">
+    <div class="card-qlpt-body">
+        <form asp-controller="MaintenanceTickets" asp-action="Create" method="post" enctype="multipart/form-data" class="form-qlpt">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @* Chọn hợp đồng *@
+            <div class="mb-3">
+                <label class="form-label" style="font-size:13px;font-weight:600;">Phòng / Hợp đồng liên quan</label>
+                <select asp-for="ContractId" class="form-select" asp-items="ViewBag.ContractId">
+                    <option value="">-- Chọn phòng --</option>
+                </select>
+                <span asp-validation-for="ContractId" class="text-danger small"></span>
+            </div>
+
+            @* Tiêu đề *@
+            <div class="mb-3">
+                <label asp-for="Title"></label>
+                <input asp-for="Title" class="form-control" placeholder="VD: Bóng đèn phòng tắm bị hỏng, van nước bị chảy..." />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            @* Mô tả *@
+            <div class="mb-3">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control" rows="4"
+                          placeholder="Mô tả chi tiết vấn đề: tình trạng, vị trí, mức độ ảnh hưởng..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            @* Mức độ ưu tiên *@
+            <div class="mb-3">
+                <label asp-for="Priority"></label>
+                <select asp-for="Priority" class="form-select"
+                        asp-items="Html.GetEnumSelectList<Website_QLPT.Models.TicketPriority>()"></select>
+            </div>
+
+            @* Upload ảnh *@
+            <div class="mb-4">
+                <label class="form-label" style="font-size:13px;font-weight:600;">
+                    Ảnh minh họa <small class="text-muted">(tùy chọn)</small>
+                </label>
+                <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                <small class="text-muted">Đính kèm ảnh để hỗ trợ xử lý nhanh hơn. Định dạng: JPG, PNG, WEBP.</small>
+            </div>
+
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;margin-bottom:20px;font-size:13px;">
+                <i class="bi bi-info-circle text-primary me-2"></i>
+                Phiếu bảo trì của bạn sẽ được xét duyệt và xử lý trong vòng <strong>24–48 giờ</strong>.
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary">
+                    <i class="bi bi-send"></i> Gửi phiếu
+                </button>
+                <a asp-controller="MaintenanceTickets" asp-action="Index" class="btn-qlpt btn-qlpt-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

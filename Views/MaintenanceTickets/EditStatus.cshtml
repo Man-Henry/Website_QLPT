@@ -1,0 +1,48 @@
+@model Website_QLPT.Models.MaintenanceTicket
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Cập Nhật Trạng Thái Sự Cố";
+}
+
+<div class="page-header mb-4">
+    <h1 class="page-title"><i class="bi bi-pencil-square text-secondary me-2"></i>Cập Nhật Sự Cố #@Model.Id</h1>
+    <a asp-action="Index" class="btn-qlpt btn-qlpt-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="card-qlpt max-w-2xl mx-auto">
+    <div class="card-qlpt-body p-4">
+        <div class="bg-light p-3 rounded mb-4">
+            <h6 class="fw-bold mb-1">@Model.Title</h6>
+            <div class="text-muted small">Người gửi: @Model.Contract?.Tenant?.FullName | Phòng: @Model.Contract?.Room?.Name</div>
+        </div>
+        
+        <form asp-action="EditStatus" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="mb-4">
+                <label asp-for="Status" class="form-label fw-bold">Trạng thái mới <span class="text-danger">*</span></label>
+                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<Website_QLPT.Models.TicketStatus>()"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="bi bi-info-circle-fill me-3 fs-3"></i>
+                <small>Khách thuê sẽ nhìn thấy trạng thái này ngay khi họ vào danh sách Sự cố. Hãy cập nhật Trạng thái liên tục để khách thuê an tâm.</small>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn-qlpt btn-qlpt-primary py-2 text-uppercase fw-bold">
+                    <i class="bi bi-save me-1"></i> Lưu Cập Nhật
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

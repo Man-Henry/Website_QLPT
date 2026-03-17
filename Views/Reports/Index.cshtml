@@ -1,0 +1,160 @@
+@model Website_QLPT.ViewModels.ReportsIndexViewModel
+@{
+    ViewData["Title"] = "Báo Cáo Thống Kê";
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-bar-chart-line me-2 text-secondary"></i>Báo Cáo & Thống Kê</h1>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="toast-container-qlpt">
+        <div class="toast-qlpt toast-error" style="border-left: 4px solid #ef4444; background: #fff; display: flex; align-items: center; padding: 12px 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 20px;">
+            <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+            <span>@TempData["Error"]</span>
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div style="width:48px;height:48px;background:var(--primary-light);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:24px;margin-right:16px;">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color:#111;">Báo Cáo Doanh Thu</h5>
+                        <p class="text-muted mb-0" style="font-size:13px;">Xuất file Excel tổng hợp doanh thu theo thời gian tùy chọn.</p>
+                    </div>
+                </div>
+
+                <form asp-action="ExportRevenue" method="post" class="mt-4">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted" style="font-size:12px;">TỪ NGÀY</label>
+                            <input type="date" name="fromDate" required class="form-control" value="@DateTime.Now.ToString("yyyy-MM-01")" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted" style="font-size:12px;">ĐẾN NGÀY</label>
+                            <input type="date" name="toDate" required class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-qlpt btn-qlpt-primary w-100 mt-4">
+                        <i class="bi bi-file-earmark-excel me-2"></i> Xuất Báo Cáo Excel
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card-qlpt h-100">
+            <div class="card-qlpt-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div style="width:48px;height:48px;background:#ecfeff;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#0f766e;font-size:24px;margin-right:16px;">
+                        <i class="bi bi-building-check"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1" style="color:#111;">Trạng Thái Phòng Theo Khu Nhà</h5>
+                        <p class="text-muted mb-0" style="font-size:13px;">Theo dõi nhanh số phòng trống, đang thuê và bảo trì.</p>
+                    </div>
+                </div>
+
+                @if (Model.PropertyStatuses.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table-qlpt mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Khu nhà</th>
+                                    <th>Tổng</th>
+                                    <th>Trống</th>
+                                    <th>Đang thuê</th>
+                                    <th>Bảo trì</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.PropertyStatuses)
+                                {
+                                    <tr>
+                                        <td><strong>@item.PropertyName</strong></td>
+                                        <td>@item.TotalRooms</td>
+                                        <td><span class="badge-qlpt badge-available">@item.AvailableRooms</span></td>
+                                        <td><span class="badge bg-primary">@item.RentedRooms</span></td>
+                                        <td><span class="badge bg-warning text-dark">@item.MaintenanceRooms</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted text-center py-4">
+                        <i class="bi bi-building fs-2 d-block mb-2"></i>
+                        Chưa có khu nhà nào để tổng hợp trạng thái phòng.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-qlpt mt-4">
+    <div class="card-qlpt-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h5 class="fw-bold mb-1" style="color:#111;">Hợp Đồng Sắp Hết Hạn</h5>
+                <p class="text-muted mb-0" style="font-size:13px;">Danh sách hợp đồng còn hiệu lực và sẽ hết hạn trong 30 ngày tới.</p>
+            </div>
+            <span class="badge bg-secondary">@Model.ExpiringContracts.Count hợp đồng</span>
+        </div>
+
+        @if (Model.ExpiringContracts.Any())
+        {
+            <div class="table-responsive">
+                <table class="table-qlpt mb-0">
+                    <thead>
+                        <tr>
+                            <th>Khách thuê</th>
+                            <th>Phòng</th>
+                            <th>Khu nhà</th>
+                            <th>Ngày hết hạn</th>
+                            <th>Ngày còn lại</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var contract in Model.ExpiringContracts)
+                        {
+                            var remainingDays = contract.EndDate.HasValue
+                                ? (contract.EndDate.Value.Date - DateTime.Today).Days
+                                : 0;
+                            <tr>
+                                <td><strong>@contract.Tenant?.FullName</strong></td>
+                                <td>@contract.Room?.Name</td>
+                                <td>@contract.Room?.Property?.Name</td>
+                                <td>@(contract.EndDate.HasValue ? contract.EndDate.Value.ToString("dd/MM/yyyy") : "--")</td>
+                                <td>
+                                    <span class="badge @(remainingDays <= 7 ? "bg-danger" : "bg-warning text-dark")">
+                                        @remainingDays ngày
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted text-center py-4">
+                <i class="bi bi-calendar-check fs-2 d-block mb-2"></i>
+                Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.
+            </div>
+        }
+    </div>
+</div>

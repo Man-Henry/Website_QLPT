@@ -1,0 +1,129 @@
+@model Website_QLPT.ViewModels.InvoiceDetailsViewModel
+@{
+    var invoice = Model.Invoice;
+    ViewData["Title"] = $"Hóa đơn tháng {invoice.Month}/{invoice.Year}";
+}
+
+<div class="page-header">
+    <h1 class="page-title"><i class="bi bi-receipt me-2 text-secondary"></i>Hóa Đơn Tháng @invoice.Month/@invoice.Year</h1>
+    <div class="d-flex gap-2">
+        @if (Model.IsAdmin && invoice.Status == Website_QLPT.Models.InvoiceStatus.Unpaid)
+        {
+            <form asp-action="MarkAsPaid" asp-route-id="@invoice.Id" method="post"
+                  onsubmit="return confirm('Xác nhận đã thu tiền hóa đơn này?')">
+                @Html.AntiForgeryToken()
+                <button class="btn-qlpt btn-qlpt-primary"><i class="bi bi-cash-coin"></i> Đánh dấu Đã thu</button>
+            </form>
+        }
+        @if (Model.IsAdmin)
+        {
+            <form asp-action="SendEmailInvoice" asp-route-id="@invoice.Id" method="post" class="d-inline" onsubmit="return confirm('Xác nhận gửi email thông báo hóa đơn này cho khách thuê?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-qlpt" style="background-color: #ef4444; color: white;">
+                    <i class="bi bi-envelope"></i> Gửi Email
+                </button>
+            </form>
+        }
+        <a asp-action="Print" asp-route-id="@invoice.Id" target="_blank" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-printer"></i> In Hóa Đơn</a>
+        @if (Model.IsAdmin)
+        {
+            <a asp-action="Index" asp-route-month="@invoice.Month" asp-route-year="@invoice.Year" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Danh sách</a>
+        }
+        else
+        {
+            <a asp-controller="TenantDashboard" asp-action="Index" class="btn-qlpt btn-qlpt-secondary"><i class="bi bi-arrow-left"></i> Tổng quan</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card-qlpt mb-3">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">THÔNG TIN HÓA ĐƠN</h6>
+                <table class="w-100" style="font-size:14px;">
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;width:45%;">Kỳ</td>
+                        <td><strong>Tháng @invoice.Month / @invoice.Year</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Phòng</td>
+                        <td><strong>@invoice.Contract?.Room?.Name</strong> <small class="text-muted">(@invoice.Contract?.Room?.Property?.Name)</small></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Khách thuê</td>
+                        <td><strong>@invoice.Contract?.Tenant?.FullName</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Ngày tạo</td>
+                        <td>@invoice.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <td style="color:#6b7280;padding:6px 0;">Trạng thái</td>
+                        <td>
+                            @if (invoice.Status == Website_QLPT.Models.InvoiceStatus.Paid)
+                            {
+                                <span class="badge-qlpt badge-available"><i class="bi bi-check-circle"></i> Đã thu</span>
+                                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">@(invoice.PaidAt.HasValue ? invoice.PaidAt.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
+                            }
+                            else
+                            {
+                                <span class="badge-qlpt badge-maintenance"><i class="bi bi-clock"></i> Chưa thu</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card-qlpt">
+            <div class="card-qlpt-body">
+                <h6 style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px;">CHI TIẾT CÁC KHOẢN</h6>
+                <table class="w-100" style="font-size:14px;">
+                    <thead>
+                        <tr style="font-size:11px;color:#9ca3af;border-bottom:1px solid #e2e4e8;">
+                            <th style="padding:4px 0;font-weight:600;">Khoản</th>
+                            <th style="text-align:right;padding:4px 0;">Chi tiết</th>
+                            <th style="text-align:right;padding:4px 0;">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:10px 0;"><i class="bi bi-house-door me-2 text-secondary"></i>Tiền phòng</td>
+                            <td style="text-align:right;color:#6b7280;font-size:13px;">--</td>
+                            <td style="text-align:right;font-weight:600;">@invoice.RoomFee.ToString("N0") VND</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:10px 0;"><i class="bi bi-lightning-charge me-2 text-warning"></i>Tiền điện</td>
+                            <td style="text-align:right;color:#6b7280;font-size:13px;">
+                                (@invoice.ElectricityNew - @invoice.ElectricityOld) kWh × @invoice.ElectricityPrice.ToString("N0") VND
+                            </td>
+                            <td style="text-align:right;font-weight:600;">@invoice.ElectricityFee.ToString("N0") VND</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:10px 0;"><i class="bi bi-droplet me-2 text-primary"></i>Tiền nước</td>
+                            <td style="text-align:right;color:#6b7280;font-size:13px;">
+                                (@invoice.WaterNew - @invoice.WaterOld) m³ × @invoice.WaterPrice.ToString("N0") VND
+                            </td>
+                            <td style="text-align:right;font-weight:600;">@invoice.WaterFee.ToString("N0") VND</td>
+                        </tr>
+                        @if (invoice.OtherFee > 0)
+                        {
+                            <tr style="border-bottom:1px solid #f3f4f6;">
+                                <td style="padding:10px 0;"><i class="bi bi-plus-circle me-2 text-secondary"></i>@(invoice.OtherFeeNote ?? "Phí khác")</td>
+                                <td style="text-align:right;color:#6b7280;font-size:13px;">--</td>
+                                <td style="text-align:right;font-weight:600;">@invoice.OtherFee.ToString("N0") VND</td>
+                            </tr>
+                        }
+                        <tr style="background:#f9fafb;">
+                            <td colspan="2" style="padding:14px 0 14px 8px;font-size:16px;font-weight:700;color:#111;">TỔNG CỘNG</td>
+                            <td style="text-align:right;font-size:20px;font-weight:800;color:#111;padding:14px 0;">@invoice.TotalAmount.ToString("N0") <small style="font-size:12px;color:#9ca3af;">VND</small></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
